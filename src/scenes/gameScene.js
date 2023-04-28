@@ -76,7 +76,7 @@ export class GameScene extends Phaser.Scene {
 
   drawPlayer(xPos, yPos) {
     const player = this.physics.add.sprite(xPos, yPos, "povman").setScale(0.96);
-
+    player.setCircle(15);
     return player;
   }
 
