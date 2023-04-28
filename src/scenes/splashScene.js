@@ -20,5 +20,9 @@ export class SplashScene extends Phaser.Scene {
         this.background.y = 300;
     }
 
-    update() {}
+    update(time, delta) {
+        if (time > 3000) {
+            this.scene.switch('titleScene');
+        }
+    }
 }
