@@ -16,7 +16,7 @@ const config = {
       gravity: { y: 0 },
     },
   },
-  scene: [SplashScene, TitleScene, MenuScene, GameScene],
+  scene: [GameScene, SplashScene, TitleScene, MenuScene],
 };
 
 export default new Phaser.Game(config);
