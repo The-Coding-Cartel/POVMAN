@@ -37,7 +37,7 @@ export class GameScene extends Phaser.Scene {
     this.music.play();
     this.cursors = this.input.keyboard.createCursorKeys();
     this.walls = this.drawMap(this, map, mapX, mapY, mapS);
-    this.player = this.drawPlayer(430, 425);
+    this.player = this.drawPlayer(430, 705);
     this.scoreLabel = this.createScoreLabel(16, 16, 0);
     this.physics.add.collider(this.player, this.walls);
     this.physics.add.overlap(
@@ -58,9 +58,17 @@ export class GameScene extends Phaser.Scene {
       this
     );
 
-    this.ghostSpawner.spawn();
-    this.ghostSpawner.spawn();
-    this.ghostSpawner.spawn();
+    for (let i = 0; i < 3; i++) {
+      this.ghostSpawner.spawn();
+    }
+
+    this.physics.add.collider(
+      this.player,
+      this.ghostGroup,
+      this.hitGhost,
+      null,
+      this
+    );
   }
 
   update() {
@@ -171,6 +179,17 @@ export class GameScene extends Phaser.Scene {
     const label = new ScoreLabel(this, x, y, score, style);
     this.add.existing(label);
     return label;
+  }
+
+  hitGhost(player, ghost) {
+    this.physics.pause();
+    player.setTint(0xFF4444)
+    this.gameOverText = this.add.text(this.canvas.width/2, this.canvas.height/2, "Game Over", {
+      font: "100px Arial",
+      strokeThickness: 2,
+      color: "#000000",
+      backgroundColor: "#ffffff",
+    }).setOrigin(0.5);
   }
 
   changeDir(ghost, wall) {
