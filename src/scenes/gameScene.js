@@ -28,9 +28,13 @@ export class GameScene extends Phaser.Scene {
     this.load.image("povman", "./povman.png");
     this.load.image("coin", "./coin.png");
     this.load.image("ghost", "./ghost.png");
+    this.load.audio("background-music", "./background.wav");
   }
 
   create() {
+    this.music = this.sound.add("background-music", { loop: true });
+
+    this.music.play();
     this.cursors = this.input.keyboard.createCursorKeys();
     this.walls = this.drawMap(this, map, mapX, mapY, mapS);
     this.player = this.drawPlayer(430, 425);
