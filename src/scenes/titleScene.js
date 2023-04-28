@@ -1,21 +1,28 @@
 import Phaser from "phaser";
 
 export class TitleScene extends Phaser.Scene {
-    constructor () {
-        super('titleScene');
-    }
+  constructor() {
+    super("titleScene");
+  }
 
-    init() {
-        
-    }
+  init() {
+    this.cameras.main.setBackgroundColor("#4E68E0");
+  }
 
-    preload() {
-        
-    }
+  preload() {
+    console.log("Hello");
+    this.load.image("title-img", "./POVMAN-title.jpg");
+  }
 
-    create() {
-        
-    }
+  create() {
+    this.background = this.add.sprite(0, 0, "title-img");
+    this.background.x = 400;
+    this.background.y = 300;
+  }
 
-    update() {}
+  update(time, delta) {
+    if (time > 3000) {
+      this.scene.switch("menuScene");
+    }
+  }
 }
