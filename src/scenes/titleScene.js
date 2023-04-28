@@ -10,7 +10,6 @@ export class TitleScene extends Phaser.Scene {
   }
 
   preload() {
-    console.log("Hello");
     this.load.image("title-img", "./POVMAN-title.jpg");
   }
 
