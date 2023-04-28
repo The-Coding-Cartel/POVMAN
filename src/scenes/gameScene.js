@@ -1,5 +1,6 @@
 import Phaser from "phaser";
 import { map } from "../assets/mapsarray";
+import ScoreLabel from "../ui/scoreLabel";
 
 export const mapX = 28,
   mapY = 31,
@@ -11,6 +12,7 @@ export class GameScene extends Phaser.Scene {
   constructor() {
     super("gameScene");
     this.direction = "up";
+    this.scoreLabel = undefined;
   }
   init() {
     this.cameras.main.setBackgroundColor("#000000");
@@ -21,12 +23,14 @@ export class GameScene extends Phaser.Scene {
     console.log("loading image...");
     this.load.image("wall", "./wall.png");
     this.load.image("povman", "./povman.png");
+    this.load.image("coin", "./coin.png");
   }
 
   create() {
     this.cursors = this.input.keyboard.createCursorKeys();
     this.walls = this.drawMap(this, map, mapX, mapY, mapS);
     this.player = this.drawPlayer(430, 425);
+    this.scoreLabel = this.createScoreLabel(16, 16, 0);
     this.physics.add.collider(
       this.player,
       this.walls,
@@ -34,15 +38,24 @@ export class GameScene extends Phaser.Scene {
       null,
       this
     );
+    this.physics.add.overlap(
+      this.player,
+      this.coins,
+      this.collectCoin,
+      null,
+      this
+    );
   }
 
   update() {
     this.playerMovement(this.cursors);
+    this.physics.world.wrap(this.player, 5);
   }
 
   drawMap(scene, map, mapX, mapY, mapS) {
     const graphics = scene.add.graphics();
     const walls = this.physics.add.staticGroup();
+    this.coins = this.physics.add.staticGroup();
 
     graphics.fillStyle(0xffffff, 1); // Fill color and alpha
     graphics.lineStyle(1, 0x000000, 1); // Line width, color, and alpha
@@ -52,7 +65,8 @@ export class GameScene extends Phaser.Scene {
       graphics.strokeRect(x, y, mapS, mapS);
       if (map[i] === 1) {
         walls.create(x + mapS / 2, y + mapS / 2, "wall");
-      } else {
+      } else if (map[i] === 0) {
+        this.coins.create(x + mapS / 2, y + mapS / 2, "coin");
         graphics.fillRect(x, y, mapS, mapS);
       }
     }
@@ -61,7 +75,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   drawPlayer(xPos, yPos) {
-    const player = this.physics.add.sprite(xPos, yPos, "povman").setScale(0.99);
+    const player = this.physics.add.sprite(xPos, yPos, "povman").setScale(0.96);
 
     return player;
   }
@@ -104,6 +118,16 @@ export class GameScene extends Phaser.Scene {
 
       this.direction = "right";
     }
+  }
+  collectCoin(player, coin) {
+    coin.disableBody(true, true);
+    this.scoreLabel.add(1);
+  }
+  createScoreLabel(x, y, score) {
+    const style = { fontSize: "32px", fill: "#000" };
+    const label = new ScoreLabel(this, x, y, score, style);
+    this.add.existing(label);
+    return label;
   }
 
   changeDir(player, wall) {
