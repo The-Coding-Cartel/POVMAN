@@ -73,5 +73,6 @@ export class GameScene extends Phaser.Scene {
     } else if (cursors.right.isDown) {
       this.player.setVelocityX(speed);
     }
+    this.physics.world.wrap(this.player, 0);
   }
 }
