@@ -14,9 +14,10 @@ const config = {
     default: "arcade",
     arcade: {
       gravity: { y: 0 },
+      debug: true,
     },
   },
-  scene: [SplashScene, TitleScene, MenuScene, GameScene],
+  scene: [GameScene, SplashScene, TitleScene, MenuScene],
 };
 
 export default new Phaser.Game(config);
