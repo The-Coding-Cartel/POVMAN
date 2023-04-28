@@ -1,6 +1,7 @@
 import Phaser from "phaser";
 import { map } from "../assets/mapsarray";
 import ScoreLabel from "../ui/scoreLabel";
+import GhostSpawner from "../assets/ghostSpawner";
 
 export const mapX = 28,
   mapY = 31,
@@ -13,6 +14,7 @@ export class GameScene extends Phaser.Scene {
     super("gameScene");
     this.direction = "up";
     this.scoreLabel = undefined;
+    this.ghostSpawner = undefined;
   }
   init() {
     this.cameras.main.setBackgroundColor("#000000");
@@ -24,6 +26,7 @@ export class GameScene extends Phaser.Scene {
     this.load.image("wall", "./wall.png");
     this.load.image("povman", "./povman.png");
     this.load.image("coin", "./coin.png");
+    this.load.image("ghost", "./ghost.png");
   }
 
   create() {
@@ -31,13 +34,7 @@ export class GameScene extends Phaser.Scene {
     this.walls = this.drawMap(this, map, mapX, mapY, mapS);
     this.player = this.drawPlayer(430, 425);
     this.scoreLabel = this.createScoreLabel(16, 16, 0);
-    this.physics.add.collider(
-      this.player,
-      this.walls,
-      this.changeDir,
-      null,
-      this
-    );
+    this.physics.add.collider(this.player, this.walls);
     this.physics.add.overlap(
       this.player,
       this.coins,
@@ -45,11 +42,28 @@ export class GameScene extends Phaser.Scene {
       null,
       this
     );
+    this.ghostSpawner = new GhostSpawner(this, "ghost");
+    const ghostGroup = this.ghostSpawner.group;
+
+    this.physics.add.collider(
+      ghostGroup,
+      this.walls,
+      this.changeDir,
+      null,
+      this
+    );
+    console.log(ghostGroup.countActive(true));
+
+    this.ghostSpawner.spawn();
+    this.ghost = ghostGroup.getFirst(true);
+    console.log(this.ghost, "<--Ghost");
+    console.log(ghostGroup.countActive(true));
   }
 
   update() {
     this.playerMovement(this.cursors);
-    this.physics.world.wrap(this.player, 5);
+    this.enemyMovement();
+    this.physics.world.wrap(this.player, 0);
   }
 
   drawMap(scene, map, mapX, mapY, mapS) {
@@ -81,7 +95,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   playerMovement(cursors) {
-    const speed = 75;
+    const speed = 125;
     this.player.setVelocity(0);
 
     switch (this.direction) {
@@ -119,10 +133,32 @@ export class GameScene extends Phaser.Scene {
       this.direction = "right";
     }
   }
+
+  enemyMovement() {
+    const speed = 125;
+    this.ghost.setVelocity(0);
+
+    switch (this.enemyDirection) {
+      case "up":
+        this.ghost.setVelocityY(-speed);
+        break;
+      case "down":
+        this.ghost.setVelocityY(speed);
+        break;
+      case "left":
+        this.ghost.setVelocityX(-speed);
+        break;
+      case "right":
+        this.ghost.setVelocityX(speed);
+        break;
+    }
+  }
+
   collectCoin(player, coin) {
     coin.disableBody(true, true);
     this.scoreLabel.add(1);
   }
+
   createScoreLabel(x, y, score) {
     const style = { fontSize: "32px", fill: "#000" };
     const label = new ScoreLabel(this, x, y, score, style);
@@ -132,18 +168,18 @@ export class GameScene extends Phaser.Scene {
 
   changeDir(player, wall) {
     // if the direction your trying to go is blocked set direction to previous direction
-    // const dirs = ["up", "left", "down", "right"];
-    // const index = Phaser.Math.Between(0, 3);
-    // this.direction = dirs[index];
-    // console.log(this.direction);
-    // if (!player.body.touching.up) {
-    //   this.direction = "up";
-    // } else if (!player.body.touching.left) {
-    //   this.direction = "left";
-    // } else if (!player.body.touching.down) {
-    //   this.direction = "down";
-    // } else if (!player.body.touching.right) {
-    //   this.direction = "right";
-    // }
+    const dirs = ["up", "left", "down", "right"];
+    const index = Phaser.Math.Between(0, 3);
+    this.enemyDirection = dirs[index];
+    console.log(this.enemyDirection);
+    if (!player.body.touching.up) {
+      this.enemyDirection = "up";
+    } else if (!player.body.touching.left) {
+      this.enemyDirection = "left";
+    } else if (!player.body.touching.down) {
+      this.enemyDirection = "down";
+    } else if (!player.body.touching.right) {
+      this.enemyDirection = "right";
+    }
   }
 }
