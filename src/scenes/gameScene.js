@@ -23,15 +23,10 @@ export class GameScene extends Phaser.Scene {
   }
 
   create() {
-    //this.drawMap(this, map, mapX, mapY, mapS);
     this.cursors = this.input.keyboard.createCursorKeys();
     this.walls = this.drawMap(this, map, mapX, mapY, mapS);
-    this.player = this.drawPlayer(this, 430, 425, 16);
-    this.physics.add.collider(this.player, this.walls, () => {
-      this.player.x = this.player.x - this.player.body.deltaX();
-      this.player.y = this.player.y - this.player.body.deltaY();
-    });
-    console.log(this.walls);
+    this.player = this.drawPlayer(430, 425);
+    this.physics.add.collider(this.player, this.walls);
   }
 
   update() {
@@ -40,7 +35,7 @@ export class GameScene extends Phaser.Scene {
 
   drawMap(scene, map, mapX, mapY, mapS) {
     const graphics = scene.add.graphics();
-    const walls = this.physics.add.group();
+    const walls = this.physics.add.staticGroup();
 
     graphics.fillStyle(0xffffff, 1); // Fill color and alpha
     graphics.lineStyle(1, 0x000000, 1); // Line width, color, and alpha
@@ -49,9 +44,7 @@ export class GameScene extends Phaser.Scene {
       const y = Math.floor(i / mapX) * mapS;
       graphics.strokeRect(x, y, mapS, mapS);
       if (map[i] === 1) {
-        console.log(i);
-        //graphics.fillRect(x, y, mapS, mapS);
-        walls.physics.add.sprite(x + mapS / 2, y + mapS / 2, "wall");
+        walls.create(x + mapS / 2, y + mapS / 2, "wall");
       } else {
         graphics.fillRect(x, y, mapS, mapS);
       }
@@ -60,33 +53,25 @@ export class GameScene extends Phaser.Scene {
     return walls;
   }
 
-  drawPlayer(scene, xPos, yPos, size) {
-    const graphics = scene.add.graphics();
-    graphics.fillStyle(0xffff00, 1); // Fill color and alpha
-    //this.player = graphics.fillRect(xPos, yPos, size, size); // x, y, width, height
-
+  drawPlayer(xPos, yPos) {
     const player = this.physics.add.sprite(xPos, yPos, "povman");
-    player.setBounce(0);
-    player.setCollideWorldBounds(true);
     return player;
-    // Draw a line extending out of the rectangle
-    // graphics.lineStyle(2, 0xffff00, 1); // Line width, color, and alpha
-    // graphics.beginPath();
-    // graphics.moveTo(xPos + size / 2, yPos + size / 2); // Start position of the line
-    // graphics.lineTo(xPos + size * 2, yPos + size / 2); // End position of the line
-    // graphics.closePath();
-    // graphics.strokePath();
   }
 
   playerMovement(cursors) {
+    const speed = 200;
+    this.player.setVelocity(0);
+
     if (cursors.up.isDown) {
-      this.player.y -= 5; // move up
-    } else if (cursors.left.isDown) {
-      this.player.x -= 5; // move left
+      this.player.setVelocityY(-speed);
     } else if (cursors.down.isDown) {
-      this.player.y += 5; // move down
+      this.player.setVelocityY(speed);
+    }
+
+    if (cursors.left.isDown) {
+      this.player.setVelocityX(-speed);
     } else if (cursors.right.isDown) {
-      this.player.x += 5; // move right
+      this.player.setVelocityX(speed);
     }
   }
 }
