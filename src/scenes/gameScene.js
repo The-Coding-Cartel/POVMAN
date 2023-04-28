@@ -13,6 +13,7 @@ export class GameScene extends Phaser.Scene {
   constructor() {
     super("gameScene");
     this.direction = "up";
+    this.enemyDirection = "up";
     this.scoreLabel = undefined;
     this.ghostSpawner = undefined;
   }
@@ -43,26 +44,28 @@ export class GameScene extends Phaser.Scene {
       this
     );
     this.ghostSpawner = new GhostSpawner(this, "ghost");
-    const ghostGroup = this.ghostSpawner.group;
+    this.ghostGroup = this.ghostSpawner.group;
 
     this.physics.add.collider(
-      ghostGroup,
+      this.ghostGroup,
       this.walls,
       this.changeDir,
       null,
       this
     );
-    console.log(ghostGroup.countActive(true));
 
     this.ghostSpawner.spawn();
-    this.ghost = ghostGroup.getFirst(true);
-    console.log(this.ghost, "<--Ghost");
-    console.log(ghostGroup.countActive(true));
+    this.ghostSpawner.spawn();
+    this.ghostSpawner.spawn();
   }
 
   update() {
+    this.ghostsArray = this.ghostGroup.getChildren();
     this.playerMovement(this.cursors);
-    this.enemyMovement();
+    this.ghostsArray.forEach((ghost) => {
+      this.enemyMovement(ghost);
+    });
+
     this.physics.world.wrap(this.player, 0);
   }
 
@@ -134,22 +137,22 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
-  enemyMovement() {
+  enemyMovement(ghost) {
     const speed = 125;
-    this.ghost.setVelocity(0);
+    ghost.setVelocity(0);
 
-    switch (this.enemyDirection) {
+    switch (ghost.direction) {
       case "up":
-        this.ghost.setVelocityY(-speed);
+        ghost.setVelocityY(-speed);
         break;
       case "down":
-        this.ghost.setVelocityY(speed);
+        ghost.setVelocityY(speed);
         break;
       case "left":
-        this.ghost.setVelocityX(-speed);
+        ghost.setVelocityX(-speed);
         break;
       case "right":
-        this.ghost.setVelocityX(speed);
+        ghost.setVelocityX(speed);
         break;
     }
   }
@@ -166,20 +169,20 @@ export class GameScene extends Phaser.Scene {
     return label;
   }
 
-  changeDir(player, wall) {
+  changeDir(ghost, wall) {
     // if the direction your trying to go is blocked set direction to previous direction
     const dirs = ["up", "left", "down", "right"];
     const index = Phaser.Math.Between(0, 3);
-    this.enemyDirection = dirs[index];
-    console.log(this.enemyDirection);
-    if (!player.body.touching.up) {
-      this.enemyDirection = "up";
-    } else if (!player.body.touching.left) {
-      this.enemyDirection = "left";
-    } else if (!player.body.touching.down) {
-      this.enemyDirection = "down";
-    } else if (!player.body.touching.right) {
-      this.enemyDirection = "right";
-    }
+    ghost.direction = dirs[index];
+
+    // if (!ghost.body.touching.up) {
+    //   this.enemyDirection = "up";
+    // } else if (!ghost.body.touching.left) {
+    //   this.enemyDirection = "left";
+    // } else if (!ghost.body.touching.down) {
+    //   this.enemyDirection = "down";
+    // } else if (!ghost.body.touching.right) {
+    //   this.enemyDirection = "right";
+    // }
   }
 }
