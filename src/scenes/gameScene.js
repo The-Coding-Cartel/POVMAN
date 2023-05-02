@@ -2,12 +2,23 @@ import Phaser from "phaser";
 import { map } from "../assets/mapsarray";
 import ScoreLabel from "../ui/scoreLabel";
 import GhostSpawner from "../assets/ghostSpawner";
+import {
+  addDoc,
+  collection,
+  query,
+  getDocs,
+  orderBy,
+  limit,
+  serverTimestamp,
+} from "@firebase/firestore";
+
+import { firestore } from "../firebase";
 
 export const mapX = 28,
   mapY = 31,
   mapS = 30;
 
-console.log(map);
+
 
 export class GameScene extends Phaser.Scene {
   constructor() {
@@ -16,6 +27,7 @@ export class GameScene extends Phaser.Scene {
     this.enemyDirection = "up";
     this.scoreLabel = undefined;
     this.ghostSpawner = undefined;
+    this.hasHit = false;
   }
   init() {
     this.cameras.main.setBackgroundColor("#000000");
@@ -174,22 +186,21 @@ export class GameScene extends Phaser.Scene {
     this.scoreLabel.add(1);
   }
 
-  createScoreLabel(x, y, score) {
-    const style = { fontSize: "32px", fill: "#000" };
-    const label = new ScoreLabel(this, x, y, score, style);
-    this.add.existing(label);
-    return label;
-  }
-
   hitGhost(player, ghost) {
-    this.physics.pause();
-    player.setTint(0xFF4444)
-    this.gameOverText = this.add.text(this.canvas.width/2, this.canvas.height/2, "Game Over", {
-      font: "100px Arial",
-      strokeThickness: 2,
-      color: "#000000",
-      backgroundColor: "#ffffff",
-    }).setOrigin(0.5);
+    if (!this.hasHit) {
+      this.physics.pause();
+      player.setTint(0xff4444);
+      this.submitScore(this.scoreLabel.score);
+      this.gameOverText = this.add
+        .text(this.canvas.width / 2, this.canvas.height / 2, "Game Over", {
+          font: "100px Arial",
+          strokeThickness: 2,
+          color: "#000000",
+          backgroundColor: "#ffffff",
+        })
+        .setOrigin(0.5);
+    }
+    this.hasHit = true;
   }
 
   changeDir(ghost, wall) {
@@ -207,5 +218,43 @@ export class GameScene extends Phaser.Scene {
     // } else if (!ghost.body.touching.right) {
     //   this.enemyDirection = "right";
     // }
+  }
+
+  createScoreLabel(x, y, score) {
+    const style = { fontSize: "32px", fill: "#000" };
+    const label = new ScoreLabel(this, x, y, score, style);
+    this.add.existing(label);
+    return label;
+  }
+  createHighScores(scores) {
+    const style = { fontSize: "32px", fill: "#000" };
+
+    scores.forEach(({ score }, index) => {
+      const label = new ScoreLabel(this, 100, 50 + 20 * index, score, style);
+      this.add.existing(label);
+    });
+  }
+  submitScore(score) {
+    const scoreRef = collection(firestore, "scores");
+    const highScores = [];
+    const q = query(scoreRef, orderBy("score", "desc"), limit(10));
+    let data = {
+      posted_at: serverTimestamp(),
+      score: score,
+      username: "test_user",
+    };
+
+    addDoc(scoreRef, data)
+      .then(() => {
+        return getDocs(q);
+      })
+      .then((querySnapshot) => {
+        querySnapshot.forEach((doc) => {
+          // doc.data() is never undefined for query doc snapshots
+          highScores.push(doc.data());
+        });
+        this.createHighScores(highScores);
+      })
+      .catch((err) => console.log(err));
   }
 }
