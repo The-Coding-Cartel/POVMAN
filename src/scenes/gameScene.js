@@ -19,8 +19,6 @@ export const mapX = 28,
   mapY = 31,
   mapS = 30;
 
-
-
 export class GameScene extends Phaser.Scene {
   constructor() {
     super("gameScene");
@@ -29,6 +27,7 @@ export class GameScene extends Phaser.Scene {
     this.scoreLabel = undefined;
     this.ghostSpawner = undefined;
     this.hasHit = false;
+    this.poweredUp = false;
   }
   init(data) {
     this.cameras.main.setBackgroundColor("#000000");
@@ -42,6 +41,7 @@ export class GameScene extends Phaser.Scene {
     this.load.image("povman", "./povman.png");
     this.load.image("coin", "./coin.png");
     this.load.image("ghost", "./ghost.png");
+    this.load.image("powerPill", "./powerPill.png");
     this.load.audio("background-music", "./background.wav");
   }
 
@@ -58,6 +58,13 @@ export class GameScene extends Phaser.Scene {
       this.player,
       this.coins,
       this.collectCoin,
+      null,
+      this
+    );
+    this.physics.add.overlap(
+      this.player,
+      this.powerPills,
+      this.collectPowerPill,
       null,
       this
     );
@@ -98,6 +105,7 @@ export class GameScene extends Phaser.Scene {
   drawMap(scene, map, mapX, mapY, mapS) {
     const graphics = scene.add.graphics();
     const walls = this.physics.add.staticGroup();
+    this.powerPills = this.physics.add.staticGroup();
     this.coins = this.physics.add.staticGroup();
 
     graphics.fillStyle(0xffffff, 1); // Fill color and alpha
@@ -106,11 +114,19 @@ export class GameScene extends Phaser.Scene {
       const x = (i % mapX) * mapS;
       const y = Math.floor(i / mapX) * mapS;
       graphics.strokeRect(x, y, mapS, mapS);
-      if (map[i] === 1) {
-        walls.create(x + mapS / 2, y + mapS / 2, "wall");
-      } else if (map[i] === 0) {
-        this.coins.create(x + mapS / 2, y + mapS / 2, "coin");
-        graphics.fillRect(x, y, mapS, mapS);
+
+      switch (map[i]) {
+        case 0:
+          this.coins.create(x + mapS / 2, y + mapS / 2, "coin");
+          graphics.fillRect(x, y, mapS, mapS);
+          break;
+        case 1:
+          walls.create(x + mapS / 2, y + mapS / 2, "wall");
+          break;
+        case 5:
+          graphics.fillRect(x, y, mapS, mapS);
+          this.powerPills.create(x + mapS / 2, y + mapS / 2, "powerPill");
+          break;
       }
     }
     scene.add.existing(graphics);
@@ -188,8 +204,23 @@ export class GameScene extends Phaser.Scene {
     this.scoreLabel.add(1);
   }
 
+  collectPowerPill(player, powerPill) {
+    powerPill.disableBody(true, true);
+    this.poweredUp = true;
+    this.player.setTint(0xff4444);
+    this.time.addEvent({
+      delay: 8000,
+      callback: () => {
+        this.poweredUp = false;
+        this.player.clearTint();
+      },
+      callbackScope: this,
+      loop: false,
+    });
+  }
+
   hitGhost(player, ghost) {
-    if (!this.hasHit) {
+    if (!this.hasHit && !this.poweredUp) {
       this.physics.pause();
       player.setTint(0xff4444);
       this.submitScore(this.scoreLabel.score);
@@ -201,8 +232,19 @@ export class GameScene extends Phaser.Scene {
           backgroundColor: "#ffffff",
         })
         .setOrigin(0.5);
+      this.hasHit = true;
+    } else if (this.poweredUp && !this.hasHit) {
+      ghost.destroy();
+      this.scoreLabel.add(10);
+      this.time.addEvent({
+        delay: 3000,
+        callback: () => {
+          this.ghostSpawner.spawn();
+        },
+        callbackScope: this,
+        loop: false,
+      });
     }
-    this.hasHit = true;
   }
 
   changeDir(ghost, wall) {
