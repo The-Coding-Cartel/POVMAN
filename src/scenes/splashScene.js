@@ -3,6 +3,7 @@ import Phaser from "phaser";
 export class SplashScene extends Phaser.Scene {
   constructor() {
     super("splashScene");
+    this.background = null;
   }
 
   init() {
@@ -10,8 +11,8 @@ export class SplashScene extends Phaser.Scene {
   }
 
   preload() {
-    console.log("splash screen");
     this.load.image("codingCartel", "./coding cartel.png");
+    this.load.image("title-img", "./POVMAN-title.jpg");
   }
 
   create() {
@@ -23,7 +24,6 @@ export class SplashScene extends Phaser.Scene {
   update(time, delta) {
     if (time > 3000) {
       this.scene.switch("titleScene");
-      //,}
     }
   }
 }

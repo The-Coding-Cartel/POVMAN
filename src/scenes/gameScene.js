@@ -1,10 +1,6 @@
 import Phaser from "phaser";
-import { map } from "../assets/mapsarray";
-import { tilemap } from "../assets/tilemap";
 import ScoreLabel from "../ui/scoreLabel";
 import GhostSpawner from "../assets/ghostSpawner";
-import PhaserRaycaster from "phaser-raycaster";
-
 import {
   addDoc,
   collection,
@@ -14,9 +10,7 @@ import {
   limit,
   serverTimestamp,
 } from "@firebase/firestore";
-
 import { firestore } from "../firebase";
-
 export const mapX = 28,
   mapY = 31,
   mapS = 32;
@@ -26,10 +20,21 @@ export class GameScene extends Phaser.Scene {
     super("gameScene");
     this.direction = "up";
     this.enemyDirection = "up";
-    this.scoreLabel = undefined;
-    this.ghostSpawner = undefined;
+    this.scoreLabel = null;
+    this.ghostSpawner = null;
+    this.ghostGroup = null;
     this.hasHit = false;
     this.poweredUp = false;
+    this.username = null;
+    this.wallsLayer = null;
+    this.coins = null;
+    this.music = null;
+    this.cursors = null;
+    this.player = null;
+    this.scoreLabel = null;
+    this.powerPills = null;
+    this.raycaster = null;
+    this.ray = null;
   }
   init(data) {
     this.cameras.main.setBackgroundColor("#000000");
@@ -38,49 +43,39 @@ export class GameScene extends Phaser.Scene {
 
   preload() {
     this.canvas = this.sys.game.canvas;
-    console.log("loading image...");
-    this.load.image("tiles", "./tiles.png");
-    this.load.tilemapTiledJSON("tilemap", "./tilemap.json");
-    this.load.image("povman", "./povman.png");
-    this.load.image("coin", "./coin.png");
-    this.load.image("ghost", "./ghost.png");
-    this.load.image("powerPill", "./powerPill.png");
-    this.load.audio("background-music", "./background.wav");
   }
 
   create() {
     const newMap = this.make.tilemap({
       key: "tilemap",
     });
-
     const tileSet = newMap.addTilesetImage("maze", "tiles");
-
     newMap.createStaticLayer("floor", tileSet);
     this.wallsLayer = newMap.createStaticLayer("walls", tileSet);
     this.wallsLayer.setCollisionByProperty({ collides: true });
-    const debugGraphics = this.add.graphics().setAlpha(0.75);
-    this.wallsLayer.renderDebug(debugGraphics, {
-      tileColor: null,
-      collidingTileColor: new Phaser.Display.Color(243, 134, 48, 255),
-      faceColor: new Phaser.Display.Color(40, 39, 37, 255),
-    });
 
     this.coins = this.physics.add.staticGroup();
-    newMap.filterTiles((tile) => {   
+
+    newMap.filterTiles((tile) => {
       if (tile.index === -1) {
-        this.coins.create(tile.pixelX + mapS/2, tile.pixelY + mapS/2, "coin")
-        console.log(tile);
+        this.coins.create(
+          tile.pixelX + tile.width / 2,
+          tile.pixelY + tile.width / 2,
+          "coin"
+        );
       }
     });
-    
-    this.music = this.sound.add("background-music", { loop: true });
-
-    this.music.play();
+    this.ghostSpawner = new GhostSpawner(this, "ghost");
+    this.ghostGroup = this.ghostSpawner.group;
+    for (let i = 0; i < 3; i++) {
+      this.ghostSpawner.spawn();
+    }
     this.cursors = this.input.keyboard.createCursorKeys();
-    // this.walls = this.drawMap(this, map, mapX, mapY, mapS);
-    this.player = this.drawPlayer(430, 425);
+    this.player = this.createPlayer(430, 425);
     this.scoreLabel = this.createScoreLabel(16, 16, 0);
-    this.physics.add.collider(this.player, this.wallsLayer);
+    this.music = this.sound.add("background-music", { loop: true });
+    this.music.play();
+
     this.physics.add.overlap(
       this.player,
       this.coins,
@@ -95,8 +90,6 @@ export class GameScene extends Phaser.Scene {
       null,
       this
     );
-    this.ghostSpawner = new GhostSpawner(this, "ghost");
-    this.ghostGroup = this.ghostSpawner.group;
 
     this.physics.add.collider(
       this.ghostGroup,
@@ -105,10 +98,7 @@ export class GameScene extends Phaser.Scene {
       null,
       this
     );
-
-    for (let i = 0; i < 3; i++) {
-      this.ghostSpawner.spawn();
-    }
+    this.physics.add.collider(this.player, this.wallsLayer);
 
     this.physics.add.collider(
       this.player,
@@ -122,9 +112,9 @@ export class GameScene extends Phaser.Scene {
   }
 
   update() {
-    this.ghostsArray = this.ghostGroup.getChildren();
+    const ghostsArray = this.ghostGroup.getChildren();
     this.playerMovement(this.cursors);
-    this.ghostsArray.forEach((ghost) => {
+    ghostsArray.forEach((ghost) => {
       this.enemyMovement(ghost);
     });
 
@@ -132,38 +122,7 @@ export class GameScene extends Phaser.Scene {
     this.updateRaycaster();
   }
 
-  drawMap(scene, map, mapX, mapY, mapS) {
-    const graphics = scene.add.graphics();
-    const walls = this.physics.add.staticGroup();
-    this.powerPills = this.physics.add.staticGroup();
-    this.coins = this.physics.add.staticGroup();
-
-    graphics.fillStyle(0xffffff, 1); // Fill color and alpha
-    graphics.lineStyle(1, 0x000000, 1); // Line width, color, and alpha
-    for (let i = 0; i < map.length; i++) {
-      const x = (i % mapX) * mapS;
-      const y = Math.floor(i / mapX) * mapS;
-      graphics.strokeRect(x, y, mapS, mapS);
-
-      switch (map[i]) {
-        case 0:
-          this.coins.create(x + mapS / 2, y + mapS / 2, "coin");
-          graphics.fillRect(x, y, mapS, mapS);
-          break;
-        case 1:
-          walls.create(x + mapS / 2, y + mapS / 2, "wall");
-          break;
-        case 5:
-          graphics.fillRect(x, y, mapS, mapS);
-          this.powerPills.create(x + mapS / 2, y + mapS / 2, "powerPill");
-          break;
-      }
-    }
-    scene.add.existing(graphics);
-    return walls;
-  }
-
-  drawPlayer(xPos, yPos) {
+  createPlayer(xPos, yPos) {
     const player = this.physics.add.sprite(xPos, yPos, "povman").setScale(0.96);
     player.setCircle(15);
     return player;
@@ -282,20 +241,9 @@ export class GameScene extends Phaser.Scene {
   }
 
   changeDir(ghost, wall) {
-    // if the direction your trying to go is blocked set direction to previous direction
     const dirs = ["up", "left", "down", "right"];
     const index = Phaser.Math.Between(0, 3);
     ghost.direction = dirs[index];
-
-    // if (!ghost.body.touching.up) {
-    //   this.enemyDirection = "up";
-    // } else if (!ghost.body.touching.left) {
-    //   this.enemyDirection = "left";
-    // } else if (!ghost.body.touching.down) {
-    //   this.enemyDirection = "down";
-    // } else if (!ghost.body.touching.right) {
-    //   this.enemyDirection = "right";
-    // }
   }
 
   createScoreLabel(x, y, score) {
@@ -328,7 +276,6 @@ export class GameScene extends Phaser.Scene {
       })
       .then((querySnapshot) => {
         querySnapshot.forEach((doc) => {
-          // doc.data() is never undefined for query doc snapshots
           highScores.push(doc.data());
         });
         console.log(highScores);
@@ -340,21 +287,50 @@ export class GameScene extends Phaser.Scene {
   createRaycaster() {
     this.raycaster = this.raycasterPlugin.createRaycaster({ debug: true });
     this.ray = this.raycaster.createRay();
-    this.raycaster.mapGameObjects(this.wallsLayer, false, { collisionTiles: [1]});
+    this.raycaster.mapGameObjects(this.wallsLayer, false, {
+      collisionTiles: [1],
+    });
     this.ray.setOrigin(this.player.x, this.player.y);
     this.ray.setAngleDeg(0);
     this.ray.setConeDeg(45);
 
     let intersection = this.ray.castCone();
-    let hitObject = intersection.object;
-    let hitSegment = intersection.segment;
   }
 
   updateRaycaster() {
     this.ray.setOrigin(this.player.x, this.player.y);
 
     let intersection = this.ray.castCone();
-    let hitObject = intersection.object;
-    let hitSegment = intersection.segment;
   }
 }
+
+// drawMap(scene, map, mapX, mapY, mapS) {
+//   const graphics = scene.add.graphics();
+//   const walls = this.physics.add.staticGroup();
+//   this.powerPills = this.physics.add.staticGroup();
+//   this.coins = this.physics.add.staticGroup();
+
+//   graphics.fillStyle(0xffffff, 1); // Fill color and alpha
+//   graphics.lineStyle(1, 0x000000, 1); // Line width, color, and alpha
+//   for (let i = 0; i < map.length; i++) {
+//     const x = (i % mapX) * mapS;
+//     const y = Math.floor(i / mapX) * mapS;
+//     graphics.strokeRect(x, y, mapS, mapS);
+
+//     switch (map[i]) {
+//       case 0:
+//         this.coins.create(x + mapS / 2, y + mapS / 2, "coin");
+//         graphics.fillRect(x, y, mapS, mapS);
+//         break;
+//       case 1:
+//         walls.create(x + mapS / 2, y + mapS / 2, "wall");
+//         break;
+//       case 5:
+//         graphics.fillRect(x, y, mapS, mapS);
+//         this.powerPills.create(x + mapS / 2, y + mapS / 2, "powerPill");
+//         break;
+//     }
+//   }
+//   scene.add.existing(graphics);
+//   return walls;
+// }
