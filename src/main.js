@@ -9,13 +9,13 @@ import PhaserRaycaster from "phaser-raycaster";
 const config = {
   type: Phaser.AUTO,
   parent: "app",
-  width: mapX * mapS,
-  height: mapY * mapS,
+  width: 896,
+  height: 992,
   physics: {
     default: "arcade",
     arcade: {
       gravity: { y: 0 },
-      debug: true,
+      debug: false,
     },
   },
   scene: [GameScene, SplashScene, TitleScene, MenuScene],

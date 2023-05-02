@@ -1,5 +1,6 @@
 import Phaser from "phaser";
 import { map } from "../assets/mapsarray";
+import { tilemap } from "../assets/tilemap";
 import ScoreLabel from "../ui/scoreLabel";
 import GhostSpawner from "../assets/ghostSpawner";
 import PhaserRaycaster from "phaser-raycaster";
@@ -18,7 +19,7 @@ import { firestore } from "../firebase";
 
 export const mapX = 28,
   mapY = 31,
-  mapS = 30;
+  mapS = 32;
 
 export class GameScene extends Phaser.Scene {
   constructor() {
@@ -38,7 +39,8 @@ export class GameScene extends Phaser.Scene {
   preload() {
     this.canvas = this.sys.game.canvas;
     console.log("loading image...");
-    this.load.image("wall", "./wall.png");
+    this.load.image("tiles", "./tiles.png");
+    this.load.tilemapTiledJSON("tilemap", "./tilemap.json");
     this.load.image("povman", "./povman.png");
     this.load.image("coin", "./coin.png");
     this.load.image("ghost", "./ghost.png");
@@ -47,14 +49,30 @@ export class GameScene extends Phaser.Scene {
   }
 
   create() {
+    const newMap = this.make.tilemap({
+      key: "tilemap",
+    });
+
+    const tileSet = newMap.addTilesetImage("maze", "tiles");
+
+    newMap.createStaticLayer("floor", tileSet);
+    this.wallsLayer = newMap.createStaticLayer("walls", tileSet);
+    this.wallsLayer.setCollisionByProperty({ collides: true });
+    const debugGraphics = this.add.graphics().setAlpha(0.75);
+    this.wallsLayer.renderDebug(debugGraphics, {
+      tileColor: null,
+      collidingTileColor: new Phaser.Display.Color(243, 134, 48, 255),
+      faceColor: new Phaser.Display.Color(40, 39, 37, 255),
+    });
+    
     this.music = this.sound.add("background-music", { loop: true });
 
     this.music.play();
     this.cursors = this.input.keyboard.createCursorKeys();
-    this.walls = this.drawMap(this, map, mapX, mapY, mapS);
-    this.player = this.drawPlayer(430, 705);
+    // this.walls = this.drawMap(this, map, mapX, mapY, mapS);
+    this.player = this.drawPlayer(430, 425);
     this.scoreLabel = this.createScoreLabel(16, 16, 0);
-    this.physics.add.collider(this.player, this.walls);
+    this.physics.add.collider(this.player, this.wallsLayer);
     this.physics.add.overlap(
       this.player,
       this.coins,
@@ -74,7 +92,7 @@ export class GameScene extends Phaser.Scene {
 
     this.physics.add.collider(
       this.ghostGroup,
-      this.walls,
+      this.wallsLayer,
       this.changeDir,
       null,
       this
@@ -308,13 +326,12 @@ export class GameScene extends Phaser.Scene {
   }
 
   createRaycaster() {
-    this.raycaster = this.raycasterPlugin.createRaycaster({debug: true});
+    this.raycaster = this.raycasterPlugin.createRaycaster({ debug: true });
     this.ray = this.raycaster.createRay();
-    this.raycaster.mapGameObjects(this.walls.getChildren());
+    this.raycaster.mapGameObjects(this.wallsLayer, false, { collisionTiles: [1]});
     this.ray.setOrigin(this.player.x, this.player.y);
     this.ray.setAngleDeg(0);
     this.ray.setConeDeg(45);
-
 
     let intersection = this.ray.castCone();
     let hitObject = intersection.object;
