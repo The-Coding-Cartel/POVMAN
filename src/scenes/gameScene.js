@@ -167,15 +167,19 @@ export class GameScene extends Phaser.Scene {
 
     switch (this.direction) {
       case "up":
+        this.ray.setAngleDeg(270);
         this.player.setVelocityY(-speed);
         break;
       case "down":
+        this.ray.setAngleDeg(90);
         this.player.setVelocityY(speed);
         break;
       case "left":
+        this.ray.setAngleDeg(180);
         this.player.setVelocityX(-speed);
         break;
       case "right":
+        this.ray.setAngleDeg(0);
         this.player.setVelocityX(speed);
         break;
     }
