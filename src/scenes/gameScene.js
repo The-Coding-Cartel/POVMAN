@@ -64,6 +64,14 @@ export class GameScene extends Phaser.Scene {
       collidingTileColor: new Phaser.Display.Color(243, 134, 48, 255),
       faceColor: new Phaser.Display.Color(40, 39, 37, 255),
     });
+
+    this.coins = this.physics.add.staticGroup();
+    newMap.filterTiles((tile) => {   
+      if (tile.index === -1) {
+        this.coins.create(tile.pixelX + mapS/2, tile.pixelY + mapS/2, "coin")
+        console.log(tile);
+      }
+    });
     
     this.music = this.sound.add("background-music", { loop: true });
 
