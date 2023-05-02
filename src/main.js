@@ -17,7 +17,7 @@ const config = {
       debug: true,
     },
   },
-  scene: [GameScene, SplashScene, TitleScene, MenuScene],
+  scene: [SplashScene, TitleScene, MenuScene, GameScene],
 };
 
 export default new Phaser.Game(config);
