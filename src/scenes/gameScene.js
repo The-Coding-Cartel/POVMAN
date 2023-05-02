@@ -2,6 +2,7 @@ import Phaser from "phaser";
 import { map } from "../assets/mapsarray";
 import ScoreLabel from "../ui/scoreLabel";
 import GhostSpawner from "../assets/ghostSpawner";
+
 import {
   addDoc,
   collection,
@@ -29,8 +30,9 @@ export class GameScene extends Phaser.Scene {
     this.ghostSpawner = undefined;
     this.hasHit = false;
   }
-  init() {
+  init(data) {
     this.cameras.main.setBackgroundColor("#000000");
+    this.username = data.username;
   }
 
   preload() {
@@ -241,7 +243,7 @@ export class GameScene extends Phaser.Scene {
     let data = {
       posted_at: serverTimestamp(),
       score: score,
-      username: "test_user",
+      username: this.username,
     };
 
     addDoc(scoreRef, data)
@@ -253,6 +255,7 @@ export class GameScene extends Phaser.Scene {
           // doc.data() is never undefined for query doc snapshots
           highScores.push(doc.data());
         });
+        console.log(highScores);
         this.createHighScores(highScores);
       })
       .catch((err) => console.log(err));
