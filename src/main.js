@@ -4,6 +4,7 @@ import { TitleScene } from "./scenes/titleScene";
 import { MenuScene } from "./scenes/menuScene";
 import { GameScene } from "./scenes/gameScene";
 import { mapX, mapS, mapY } from "./scenes/gameScene";
+import PhaserRaycaster from "phaser-raycaster";
 
 const config = {
   type: Phaser.AUTO,
@@ -17,7 +18,16 @@ const config = {
       debug: true,
     },
   },
-  scene: [SplashScene, TitleScene, MenuScene, GameScene],
+  scene: [GameScene, SplashScene, TitleScene, MenuScene],
+  plugins: {
+    scene: [
+      {
+        key: "PhaserRaycaster",
+        plugin: PhaserRaycaster,
+        mapping: "raycasterPlugin",
+      },
+    ],
+  },
 };
 
 export default new Phaser.Game(config);

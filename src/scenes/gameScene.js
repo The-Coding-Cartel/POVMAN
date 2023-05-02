@@ -2,6 +2,7 @@ import Phaser from "phaser";
 import { map } from "../assets/mapsarray";
 import ScoreLabel from "../ui/scoreLabel";
 import GhostSpawner from "../assets/ghostSpawner";
+import PhaserRaycaster from "phaser-raycaster";
 
 import {
   addDoc,
@@ -90,6 +91,8 @@ export class GameScene extends Phaser.Scene {
       null,
       this
     );
+
+    this.createRaycaster();
   }
 
   update() {
@@ -100,6 +103,7 @@ export class GameScene extends Phaser.Scene {
     });
 
     this.physics.world.wrap(this.player, 0);
+    this.updateRaycaster();
   }
 
   drawMap(scene, map, mapX, mapY, mapS) {
@@ -301,5 +305,27 @@ export class GameScene extends Phaser.Scene {
         this.createHighScores(highScores);
       })
       .catch((err) => console.log(err));
+  }
+
+  createRaycaster() {
+    this.raycaster = this.raycasterPlugin.createRaycaster({debug: true});
+    this.ray = this.raycaster.createRay();
+    this.raycaster.mapGameObjects(this.walls.getChildren());
+    this.ray.setOrigin(this.player.x, this.player.y);
+    this.ray.setAngleDeg(0);
+    this.ray.setConeDeg(45);
+
+
+    let intersection = this.ray.castCone();
+    let hitObject = intersection.object;
+    let hitSegment = intersection.segment;
+  }
+
+  updateRaycaster() {
+    this.ray.setOrigin(this.player.x, this.player.y);
+
+    let intersection = this.ray.castCone();
+    let hitObject = intersection.object;
+    let hitSegment = intersection.segment;
   }
 }
