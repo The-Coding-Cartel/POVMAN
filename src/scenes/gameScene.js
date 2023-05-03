@@ -74,6 +74,8 @@ export class GameScene extends Phaser.Scene {
     }
     this.cursors = this.input.keyboard.createCursorKeys();
     this.player = this.createPlayer(435, 750);
+    this.player.setBounce(0);
+    this.player.setDrag(0);
     this.scoreLabel = this.createScoreLabel(16, 16, 0);
     this.music = this.sound.add("background-music", { loop: true });
     this.music.play();
@@ -127,13 +129,13 @@ export class GameScene extends Phaser.Scene {
   }
 
   createPlayer(xPos, yPos) {
-    const player = this.physics.add.sprite(xPos, yPos, "povman").setScale(0.96);
-    player.setCircle(15);
+    const player = this.physics.add.sprite(xPos, yPos, "povman").setScale(0.9);
+    player.setCircle(16);
     return player;
   }
 
   playerMovement(cursors) {
-    const speed = 125;
+    const speed = 125/2;
     this.player.setVelocity(0);
 
     switch (this.direction) {
@@ -314,19 +316,16 @@ export class GameScene extends Phaser.Scene {
         ca -= 2 * Math.PI;
       }
 
-      distance = distance * Math.cos(ca);
+      let adJustedistance = distance * Math.cos(ca);
 
       let inverse = (32 * 320) / distance;
-      if (inverse < 50) {
-        inverse = 50;
-      } else if (inverse > 320) {
-        inverse = 320;
+      if (inverse > 20) {
+        //this.graphics.rotateCanvas(3.14);
+        this.graphics.lineStyle(5, 0xff00ff, 1.0);
+        this.graphics.fillStyle(0xff0000, (inverse - 20) / 400);
+        this.graphics.fillRect(950 + i * 2.5, 350, 2.5, inverse);
+        this.graphics.fillRect(950 + i * 2.5, 350, 2.5, -inverse);
       }
-      //this.graphics.rotateCanvas(3.14);
-      this.graphics.lineStyle(5, 0xff00ff, 1.0);
-      this.graphics.fillStyle(0xff0000, 1 / (distance / 10) + 0.2);
-      this.graphics.fillRect(950 + i * 5, 350, 5, inverse);
-      this.graphics.fillRect(950 + i * 5, 350, 5, -inverse);
     }
 
     // if (this.square) {
@@ -353,10 +352,10 @@ export class GameScene extends Phaser.Scene {
 
   updateRaycaster() {
     const intersections = [];
-    for (let i = 0; i < 240; i++) {
+    for (let i = 0; i < 480; i++) {
       this.ray.setAngleDeg(this.fov);
       intersections.push(this.ray.cast());
-      this.fov += 0.25;
+      this.fov += 0.125;
     }
     this.ray.setOrigin(this.player.x, this.player.y);
 
