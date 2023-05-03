@@ -46,6 +46,8 @@ export class GameScene extends Phaser.Scene {
   }
 
   create() {
+    this.graphics = this.add.graphics();
+
     const newMap = this.make.tilemap({
       key: "tilemap",
     });
@@ -100,13 +102,13 @@ export class GameScene extends Phaser.Scene {
     );
     this.physics.add.collider(this.player, this.wallsLayer);
 
-    this.physics.add.collider(
-      this.player,
-      this.ghostGroup,
-      this.hitGhost,
-      null,
-      this
-    );
+    // this.physics.add.collider(
+    //   this.player,
+    //   this.ghostGroup,
+    //   this.hitGhost,
+    //   null,
+    //   this
+    // );
 
     this.createRaycaster();
   }
@@ -284,6 +286,32 @@ export class GameScene extends Phaser.Scene {
       .catch((err) => console.log(err));
   }
 
+  createSquare(intersection) {
+    this.graphics.clear();
+
+    for (let i = 0; i < intersection.length; i++) {
+      const distance = Phaser.Math.Distance.Between(
+        this.ray.origin.x,
+        this.ray.origin.y,
+        intersection[i].x,
+        intersection[i].y
+      );
+      const inverse = (32 * 320) / distance;
+
+      this.graphics.lineStyle(5, 0xff00ff, 1.0);
+      this.graphics.fillStyle(0xffffff, 1.0);
+      this.graphics.fillRect(950 + i * 20, 50, 2, inverse);
+    }
+
+    // if (this.square) {
+    //   this.square.clear();
+    // }
+    // this.square = this.add.graphics();
+    // this.square.lineStyle(5, 0xff00ff, 1.0);
+    // this.square.fillStyle(0xffffff, 1.0);
+    // this.square.fillRect(950, 50, 20, inverse);
+  }
+
   createRaycaster() {
     this.raycaster = this.raycasterPlugin.createRaycaster({ debug: true });
     this.ray = this.raycaster.createRay();
@@ -300,11 +328,19 @@ export class GameScene extends Phaser.Scene {
   updateRaycaster() {
     this.ray.setOrigin(this.player.x, this.player.y);
 
-    let intersection = this.ray.cast();
+    let intersection = this.ray.castCone();
+    // const distance = Phaser.Math.Distance.Between(
+    //   this.ray.origin.x,
+    //   this.ray.origin.y,
+    //   intersection.x,
+    //   intersection.y
+    // );
+
     let hitObject = intersection.object;
     let hitSegment = intersection.segment;
-    console.log("🚀 ~ file: gameScene.js:298 ~ intersection:", intersection);
-    console.log("ORIGIN", this.ray.origin);
+    this.createSquare(intersection);
+    // console.log("🚀 ~ file: gameScene.js:298 ~ intersection:", intersection);
+    // console.log("ORIGIN", this.ray.origin);
   }
 }
 
