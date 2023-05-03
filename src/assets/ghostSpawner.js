@@ -13,7 +13,7 @@ export default class GhostSpawner {
   }
 
   spawn() {
-    const ghost = this.group.create(435, 425, this.key).setScale(0.96);
+    const ghost = this.group.create(435, 425, this.key).setScale(0.75);
     // ghost.setCircle(15);
     ghost.setCollideWorldBounds(true);
     ghost.direction = "up";

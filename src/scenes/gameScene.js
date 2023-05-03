@@ -114,6 +114,9 @@ export class GameScene extends Phaser.Scene {
 
     this.createRaycaster();
 
+      this.physics.add.overlap(this.ray, this.ghostGroup, () => {
+        console.log("overlap");
+      }, this.ray.processOverlap.bind(this.ray), this)
     // this.cameras.main.setAngle(180)
   }
 
@@ -135,7 +138,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   playerMovement(cursors) {
-    const speed = 125/2;
+    const speed = 125 / 2;
     this.player.setVelocity(0);
 
     switch (this.direction) {
@@ -325,7 +328,10 @@ export class GameScene extends Phaser.Scene {
         this.graphics.fillStyle(0xff0000, (inverse - 20) / 400);
         this.graphics.fillRect(950 + i * 2.5, 350, 2.5, inverse);
         this.graphics.fillRect(950 + i * 2.5, 350, 2.5, -inverse);
-      } else if (inverse > 20 && intersection[i].object.type !== "TilemapLayer"){
+      } else if (
+        inverse > 20 &&
+        intersection[i].object.type !== "TilemapLayer"
+      ) {
         this.graphics.lineStyle(5, 0xff00ff, 1.0);
         this.graphics.fillStyle(0x00ff00, (inverse - 20) / 400);
         this.graphics.fillRect(950 + i * 2.5, 350, 2.5, inverse);
@@ -360,7 +366,7 @@ export class GameScene extends Phaser.Scene {
     const intersections = [];
     for (let i = 0; i < 480; i++) {
       this.ray.setAngleDeg(this.fov);
-      const intersect = this.ray.cast()
+      const intersect = this.ray.cast();
       intersections.push(intersect);
       this.fov += 0.125;
     }
