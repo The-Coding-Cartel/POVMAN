@@ -296,11 +296,14 @@ export class GameScene extends Phaser.Scene {
         intersection[i].x,
         intersection[i].y
       );
-      const inverse = (32 * 320) / distance;
-
+      let inverse = (32 * 320) / distance;
+      if (inverse < 50) {
+        inverse = 50;
+      }
+      //this.graphics.rotateCanvas(3.14);
       this.graphics.lineStyle(5, 0xff00ff, 1.0);
       this.graphics.fillStyle(0xffffff, 1.0);
-      this.graphics.fillRect(950 + i * 20, 50, 2, inverse);
+      this.graphics.fillRect(950 + i * 20, 250, 20, inverse);
     }
 
     // if (this.square) {
@@ -326,9 +329,16 @@ export class GameScene extends Phaser.Scene {
   }
 
   updateRaycaster() {
+    const intersections = [];
+    let fov = -30;
+    for (let i = 0; i < 60; i++) {
+      this.ray.setAngleDeg(fov);
+      intersections.push(this.ray.cast());
+      fov++;
+    }
+    console.log(intersections);
     this.ray.setOrigin(this.player.x, this.player.y);
 
-    let intersection = this.ray.castCone();
     // const distance = Phaser.Math.Distance.Between(
     //   this.ray.origin.x,
     //   this.ray.origin.y,
@@ -336,9 +346,7 @@ export class GameScene extends Phaser.Scene {
     //   intersection.y
     // );
 
-    let hitObject = intersection.object;
-    let hitSegment = intersection.segment;
-    this.createSquare(intersection);
+    this.createSquare(intersections);
     // console.log("🚀 ~ file: gameScene.js:298 ~ intersection:", intersection);
     // console.log("ORIGIN", this.ray.origin);
   }

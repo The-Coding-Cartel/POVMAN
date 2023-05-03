@@ -9,7 +9,7 @@ import PhaserRaycaster from "phaser-raycaster";
 const config = {
   type: Phaser.AUTO,
   parent: "app",
-  width: 896 * 2,
+  width: 896 * 4,
   height: 992,
   physics: {
     default: "arcade",
