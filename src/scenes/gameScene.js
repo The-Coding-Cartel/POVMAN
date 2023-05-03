@@ -316,13 +316,18 @@ export class GameScene extends Phaser.Scene {
         ca -= 2 * Math.PI;
       }
 
-      let adJustedistance = distance * Math.cos(ca);
+      let adjusteDistance = distance * Math.cos(ca);
 
       let inverse = (32 * 320) / distance;
-      if (inverse > 20) {
+      if (inverse > 20 && intersection[i].object.type === "TilemapLayer") {
         //this.graphics.rotateCanvas(3.14);
         this.graphics.lineStyle(5, 0xff00ff, 1.0);
         this.graphics.fillStyle(0xff0000, (inverse - 20) / 400);
+        this.graphics.fillRect(950 + i * 2.5, 350, 2.5, inverse);
+        this.graphics.fillRect(950 + i * 2.5, 350, 2.5, -inverse);
+      } else if (inverse > 20 && intersection[i].object.type !== "TilemapLayer"){
+        this.graphics.lineStyle(5, 0xff00ff, 1.0);
+        this.graphics.fillStyle(0x00ff00, (inverse - 20) / 400);
         this.graphics.fillRect(950 + i * 2.5, 350, 2.5, inverse);
         this.graphics.fillRect(950 + i * 2.5, 350, 2.5, -inverse);
       }
@@ -343,6 +348,7 @@ export class GameScene extends Phaser.Scene {
     this.raycaster.mapGameObjects(this.wallsLayer, false, {
       collisionTiles: [1],
     });
+    this.raycaster.mapGameObjects(this.ghostGroup.getChildren(), true);
     this.ray.setOrigin(this.player.x, this.player.y);
     this.ray.setAngleDeg(0);
     this.ray.setConeDeg(45);
@@ -354,7 +360,8 @@ export class GameScene extends Phaser.Scene {
     const intersections = [];
     for (let i = 0; i < 480; i++) {
       this.ray.setAngleDeg(this.fov);
-      intersections.push(this.ray.cast());
+      const intersect = this.ray.cast()
+      intersections.push(intersect);
       this.fov += 0.125;
     }
     this.ray.setOrigin(this.player.x, this.player.y);
