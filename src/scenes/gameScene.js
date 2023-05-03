@@ -50,8 +50,8 @@ export class GameScene extends Phaser.Scene {
       key: "tilemap",
     });
     const tileSet = newMap.addTilesetImage("maze", "tiles");
-    newMap.createStaticLayer("floor", tileSet);
-    this.wallsLayer = newMap.createStaticLayer("walls", tileSet);
+    newMap.createLayer("floor", tileSet);
+    this.wallsLayer = newMap.createLayer("walls", tileSet);
     this.wallsLayer.setCollisionByProperty({ collides: true });
 
     this.coins = this.physics.add.staticGroup();
@@ -71,7 +71,7 @@ export class GameScene extends Phaser.Scene {
       this.ghostSpawner.spawn();
     }
     this.cursors = this.input.keyboard.createCursorKeys();
-    this.player = this.createPlayer(430, 425);
+    this.player = this.createPlayer(435, 750);
     this.scoreLabel = this.createScoreLabel(16, 16, 0);
     this.music = this.sound.add("background-music", { loop: true });
     this.music.play();
