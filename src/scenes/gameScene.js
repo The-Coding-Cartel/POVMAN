@@ -302,8 +302,8 @@ export class GameScene extends Phaser.Scene {
       }
       //this.graphics.rotateCanvas(3.14);
       this.graphics.lineStyle(5, 0xff00ff, 1.0);
-      this.graphics.fillStyle(0xffffff, 1.0);
-      this.graphics.fillRect(950 + i * 20, 250, 20, inverse);
+      this.graphics.fillStyle(0xff0000, (1/(distance/10)) + 0.2);
+      this.graphics.fillRect(950 + i * 5, 250, 5, inverse);
     }
 
     // if (this.square) {
@@ -331,10 +331,10 @@ export class GameScene extends Phaser.Scene {
   updateRaycaster() {
     const intersections = [];
     let fov = -30;
-    for (let i = 0; i < 60; i++) {
+    for (let i = 0; i < 240; i++) {
       this.ray.setAngleDeg(fov);
       intersections.push(this.ray.cast());
-      fov++;
+      fov += 0.25;
     }
     console.log(intersections);
     this.ray.setOrigin(this.player.x, this.player.y);
