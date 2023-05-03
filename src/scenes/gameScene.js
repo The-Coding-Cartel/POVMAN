@@ -111,6 +111,8 @@ export class GameScene extends Phaser.Scene {
     // );
 
     this.createRaycaster();
+
+    // this.cameras.main.setAngle(180)
   }
 
   update() {
@@ -136,19 +138,23 @@ export class GameScene extends Phaser.Scene {
 
     switch (this.direction) {
       case "up":
-        this.ray.setAngleDeg(270);
+        this.fov = 240;
+        this.playerAngle = 270;
         this.player.setVelocityY(-speed);
         break;
       case "down":
-        this.ray.setAngleDeg(90);
+        this.fov = 60;
+        this.playerAngle = 90;
         this.player.setVelocityY(speed);
         break;
       case "left":
-        this.ray.setAngleDeg(180);
+        this.fov = 150;
+        this.playerAngle = 180;
         this.player.setVelocityX(-speed);
         break;
       case "right":
-        this.ray.setAngleDeg(0);
+        this.fov = -30;
+        this.playerAngle = 0;
         this.player.setVelocityX(speed);
         break;
     }
@@ -290,20 +296,37 @@ export class GameScene extends Phaser.Scene {
     this.graphics.clear();
 
     for (let i = 0; i < intersection.length; i++) {
-      const distance = Phaser.Math.Distance.Between(
+      let distance = Phaser.Math.Distance.Between(
         this.ray.origin.x,
         this.ray.origin.y,
         intersection[i].x,
         intersection[i].y
       );
+
+      let ca = this.playerAngle - this.fov;
+      ca = ca * 0.0174533;
+
+      if (ca < 0) {
+        ca += 2 * Math.PI;
+      }
+
+      if (ca > 2 * Math.PI) {
+        ca -= 2 * Math.PI;
+      }
+
+      distance = distance * Math.cos(ca);
+
       let inverse = (32 * 320) / distance;
       if (inverse < 50) {
         inverse = 50;
+      } else if (inverse > 320) {
+        inverse = 320;
       }
       //this.graphics.rotateCanvas(3.14);
       this.graphics.lineStyle(5, 0xff00ff, 1.0);
-      this.graphics.fillStyle(0xff0000, (1/(distance/10)) + 0.2);
-      this.graphics.fillRect(950 + i * 5, 250, 5, inverse);
+      this.graphics.fillStyle(0xff0000, 1 / (distance / 10) + 0.2);
+      this.graphics.fillRect(950 + i * 5, 350, 5, inverse);
+      this.graphics.fillRect(950 + i * 5, 350, 5, -inverse);
     }
 
     // if (this.square) {
@@ -330,13 +353,11 @@ export class GameScene extends Phaser.Scene {
 
   updateRaycaster() {
     const intersections = [];
-    let fov = -30;
     for (let i = 0; i < 240; i++) {
-      this.ray.setAngleDeg(fov);
+      this.ray.setAngleDeg(this.fov);
       intersections.push(this.ray.cast());
-      fov += 0.25;
+      this.fov += 0.25;
     }
-    console.log(intersections);
     this.ray.setOrigin(this.player.x, this.player.y);
 
     // const distance = Phaser.Math.Distance.Between(
