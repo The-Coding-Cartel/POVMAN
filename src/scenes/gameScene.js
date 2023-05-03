@@ -294,13 +294,17 @@ export class GameScene extends Phaser.Scene {
     this.ray.setAngleDeg(0);
     this.ray.setConeDeg(45);
 
-    let intersection = this.ray.castCone();
+    let intersection = this.ray.cast();
   }
 
   updateRaycaster() {
     this.ray.setOrigin(this.player.x, this.player.y);
 
-    let intersection = this.ray.castCone();
+    let intersection = this.ray.cast();
+    let hitObject = intersection.object;
+    let hitSegment = intersection.segment;
+    console.log("🚀 ~ file: gameScene.js:298 ~ intersection:", intersection);
+    console.log("ORIGIN", this.ray.origin);
   }
 }
 
