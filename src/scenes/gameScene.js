@@ -42,7 +42,7 @@ export class GameScene extends Phaser.Scene {
     this.keyPress = false;
   }
   init(data) {
-    this.cameras.main.setBackgroundColor("#000000");
+    this.cameras.main.setBackgroundColor("#FFFFFF");
     this.username = data.username;
   }
 
@@ -51,6 +51,8 @@ export class GameScene extends Phaser.Scene {
   }
 
   create() {
+    this.add.rectangle(0, 0, this.canvas.width, 760, 0x00ff00);
+    this.add.rectangle(0, 760, this.canvas.width, 700, 0x000000);
     this.graphics = this.add.graphics();
     this.collectGraphics = this.add.graphics();
 
@@ -60,7 +62,9 @@ export class GameScene extends Phaser.Scene {
     const tileSet = newMap.addTilesetImage("maze", "tiles");
     newMap.createLayer("floor", tileSet).setVisible(false);
     this.wallsLayer = newMap.createLayer("walls", tileSet);
-    this.wallsLayer.setCollisionByProperty({ collides: true }).setVisible(false);
+    this.wallsLayer
+      .setCollisionByProperty({ collides: true })
+      .setVisible(false);
 
     this.coins = this.physics.add.staticGroup();
     this.powerPills = this.physics.add.staticGroup().setVisible(false);
@@ -115,7 +119,7 @@ export class GameScene extends Phaser.Scene {
     this.coins.setVisible(false);
     this.ghostGroup.setVisible(false);
     this.cursors = this.input.keyboard.createCursorKeys();
-    
+
     this.player.setBounce(0);
     this.player.setDrag(0);
     this.scoreLabel = this.createScoreLabel(16, 16, 0);
@@ -224,12 +228,11 @@ export class GameScene extends Phaser.Scene {
     //   }
     //   console.log(this.playerAngle);
     // });
-  
 
     if (cursors.left.isDown) {
       if (this.keyPress === false) {
         if (this.playerAngle === 0) {
-          this.playerAngle = 270
+          this.playerAngle = 270;
         } else {
           this.playerAngle += -90;
         }
@@ -243,12 +246,10 @@ export class GameScene extends Phaser.Scene {
         } else {
           this.playerAngle += 90;
         }
-        this.keyPress = true; 
+        this.keyPress = true;
         console.log(this.playerAngle);
       }
     }
-
-
 
     if (cursors.left.isUp && cursors.right.isUp) {
       this.keyPress = false;
@@ -399,7 +400,7 @@ export class GameScene extends Phaser.Scene {
       if (inverse > 20 && intersection[i].object.type === "TilemapLayer") {
         //this.graphics.rotateCanvas(3.14);
         this.graphics.lineStyle(5, 0xff00ff, 1.0);
-        this.graphics.fillStyle(0xff0000, (inverse - 20) / 400);
+        this.graphics.fillStyle(16777216 / 4 - inverse * 10);
         this.graphics.fillRect(0 + i * 2.5, 350, 2.5, inverse);
         this.graphics.fillRect(0 + i * 2.5, 350, 2.5, -inverse);
       } else if (
