@@ -11,7 +11,6 @@ import {
   serverTimestamp,
 } from "@firebase/firestore";
 import { firestore } from "../firebase";
-import { toHaveDisplayValue } from "@testing-library/jest-dom/dist/matchers";
 export const mapX = 28,
   mapY = 31,
   mapS = 32;
@@ -302,7 +301,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   createSquare(intersection) {
-    // this.graphics.clear();
+    this.graphics.clear();
 
     for (let i = 0; i < intersection.length; i++) {
       let distance = Phaser.Math.Distance.Between(
@@ -402,6 +401,7 @@ export class GameScene extends Phaser.Scene {
     this.renderCollectible(intersect);
   }
   renderCollectible(intersect) {
+    this.collectGraphics.clear()
     if (intersect?.object.texture?.key === "coin") {
       console.log("sprite");
       let distance = Phaser.Math.Distance.Between(
@@ -414,7 +414,7 @@ export class GameScene extends Phaser.Scene {
       let inverse = (32 * 320) / distance;
       this.collectGraphics.lineStyle(5, 0xff00ff, 1.0);
       this.collectGraphics.fillStyle(0xffd700, (inverse - 20) / 400);
-      this.collectGraphics.fillRect(2, 688, 400, 2.5, 2.5);
+      this.collectGraphics.fillRect(1547.5, 450, 25, 25);
     }
 
     // let ca = this.playerAngle - this.fov;
