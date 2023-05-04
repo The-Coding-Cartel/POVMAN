@@ -48,11 +48,12 @@ export class GameScene extends Phaser.Scene {
 
   preload() {
     this.canvas = this.sys.game.canvas;
+    this.load.tilemapTiledJSON("tilemap", "./maze2.json");
   }
 
   create() {
-    this.add.rectangle(0, 0, this.canvas.width, 760, 0x00ff00);
-    this.add.rectangle(0, 760, this.canvas.width, 700, 0x000000);
+    this.add.rectangle(0, 0, this.canvas.width, 720, 0x00cccc);
+    this.add.rectangle(0, 720, this.canvas.width, 720, 0xdddddd);
     this.graphics = this.add.graphics();
     this.collectGraphics = this.add.graphics();
 
@@ -397,18 +398,17 @@ export class GameScene extends Phaser.Scene {
       let adjustedDistance = distance * Math.cos(ca);
 
       let inverse = (32 * 320) / distance;
-      if (inverse > 20 && intersection[i].object.type === "TilemapLayer") {
+      if (intersection[i].object.type === "TilemapLayer") {
         //this.graphics.rotateCanvas(3.14);
+        const hex = this.RGBtoHex(Math.floor(inverse), 0, 0);
         this.graphics.lineStyle(5, 0xff00ff, 1.0);
-        this.graphics.fillStyle(16777216 / 4 - inverse * 10);
+        this.graphics.fillStyle(Number(hex));
         this.graphics.fillRect(0 + i * 2.5, 350, 2.5, inverse);
         this.graphics.fillRect(0 + i * 2.5, 350, 2.5, -inverse);
-      } else if (
-        inverse > 20 &&
-        intersection[i].object.type !== "TilemapLayer"
-      ) {
+      } else if (intersection[i].object.type !== "TilemapLayer") {
+        const hex = this.RGBtoHex(0, Math.floor(inverse), 0)
         this.graphics.lineStyle(5, 0xff00ff, 1.0);
-        this.graphics.fillStyle(0x00ff00, (inverse - 20) / 400);
+        this.graphics.fillStyle(Number(hex));
         this.graphics.fillRect(0 + i * 2.5, 350, 2.5, inverse);
         this.graphics.fillRect(0 + i * 2.5, 350, 2.5, -inverse);
       }
@@ -518,6 +518,20 @@ export class GameScene extends Phaser.Scene {
     //   this.graphics.fillRect(950 + i * 2.5, 350, 2.5, inverse);
     //   this.graphics.fillRect(950 + i * 2.5, 350, 2.5, -inverse);
     // }
+  }
+
+  colorToHex(color) {
+    const hexadecimal = color.toString(16);
+    return hexadecimal.length == 1 ? "0" + hexadecimal : hexadecimal;
+  }
+
+  RGBtoHex(red, green, blue) {
+    return (
+      "0x" +
+      this.colorToHex(red) +
+      this.colorToHex(green) +
+      this.colorToHex(blue)
+    );
   }
 
   // if (this.square) {
