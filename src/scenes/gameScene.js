@@ -11,6 +11,7 @@ import {
   serverTimestamp,
 } from "@firebase/firestore";
 import { firestore } from "../firebase";
+import { toHaveDisplayValue } from "@testing-library/jest-dom/dist/matchers";
 export const mapX = 28,
   mapY = 31,
   mapS = 32;
@@ -35,6 +36,8 @@ export class GameScene extends Phaser.Scene {
     this.powerPills = null;
     this.raycaster = null;
     this.ray = null;
+    this.collectCaster = null;
+    this.collectRay = null;
   }
   init(data) {
     this.cameras.main.setBackgroundColor("#000000");
@@ -47,6 +50,7 @@ export class GameScene extends Phaser.Scene {
 
   create() {
     this.graphics = this.add.graphics();
+    this.collectGraphics = this.add.graphics();
 
     const newMap = this.make.tilemap({
       key: "tilemap",
@@ -114,9 +118,7 @@ export class GameScene extends Phaser.Scene {
 
     this.createRaycaster();
 
-      this.physics.add.overlap(this.ray, this.ghostGroup, () => {
-        console.log("overlap");
-      }, this.ray.processOverlap.bind(this.ray), this)
+    this.createCollectCaster();
     // this.cameras.main.setAngle(180)
   }
 
@@ -129,9 +131,11 @@ export class GameScene extends Phaser.Scene {
 
     this.physics.world.wrap(this.player, 0);
     this.updateRaycaster();
+    this.updateCollectCaster();
   }
 
   createPlayer(xPos, yPos) {
+    this.direction = "right";
     const player = this.physics.add.sprite(xPos, yPos, "povman").setScale(0.9);
     player.setCircle(16);
     return player;
@@ -298,7 +302,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   createSquare(intersection) {
-    this.graphics.clear();
+    // this.graphics.clear();
 
     for (let i = 0; i < intersection.length; i++) {
       let distance = Phaser.Math.Distance.Between(
@@ -319,7 +323,7 @@ export class GameScene extends Phaser.Scene {
         ca -= 2 * Math.PI;
       }
 
-      let adjusteDistance = distance * Math.cos(ca);
+      let adjustedDistance = distance * Math.cos(ca);
 
       let inverse = (32 * 320) / distance;
       if (inverse > 20 && intersection[i].object.type === "TilemapLayer") {
@@ -349,7 +353,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   createRaycaster() {
-    this.raycaster = this.raycasterPlugin.createRaycaster({ debug: true });
+    this.raycaster = this.raycasterPlugin.createRaycaster();
     this.ray = this.raycaster.createRay();
     this.raycaster.mapGameObjects(this.wallsLayer, false, {
       collisionTiles: [1],
@@ -357,9 +361,6 @@ export class GameScene extends Phaser.Scene {
     this.raycaster.mapGameObjects(this.ghostGroup.getChildren(), true);
     this.ray.setOrigin(this.player.x, this.player.y);
     this.ray.setAngleDeg(0);
-    this.ray.setConeDeg(45);
-
-    let intersection = this.ray.cast();
   }
 
   updateRaycaster() {
@@ -383,6 +384,70 @@ export class GameScene extends Phaser.Scene {
     // console.log("🚀 ~ file: gameScene.js:298 ~ intersection:", intersection);
     // console.log("ORIGIN", this.ray.origin);
   }
+
+  createCollectCaster() {
+    this.collectCaster = this.raycasterPlugin.createRaycaster({ debug: true });
+    this.collectRay = this.collectCaster.createRay();
+    this.collectCaster.mapGameObjects(this.wallsLayer, false, {
+      collisionTiles: [1],
+    });
+    this.collectCaster.mapGameObjects(this.coins.getChildren(), true);
+    this.collectRay.setOrigin(this.player.x, this.player.y);
+    this.collectRay.setAngleDeg(0);
+  }
+  updateCollectCaster() {
+    this.collectRay.setOrigin(this.player.x, this.player.y);
+    this.collectRay.setAngleDeg(this.playerAngle);
+    const intersect = this.collectRay.cast();
+    this.renderCollectible(intersect);
+  }
+  renderCollectible(intersect) {
+    if (intersect?.object.texture?.key === "coin") {
+      console.log("sprite");
+      let distance = Phaser.Math.Distance.Between(
+        this.collectRay.origin.x,
+        this.collectRay.origin.y,
+        intersect.x,
+        intersect.y
+      );
+
+      let inverse = (32 * 320) / distance;
+      this.collectGraphics.lineStyle(5, 0xff00ff, 1.0);
+      this.collectGraphics.fillStyle(0xffd700, (inverse - 20) / 400);
+      this.collectGraphics.fillRect(2, 688, 400, 2.5, 2.5);
+    }
+
+    // let ca = this.playerAngle - this.fov;
+    // ca = ca * 0.0174533;
+
+    // if (ca < 0) {
+    //   ca += 2 * Math.PI;
+    // }
+
+    // if (ca > 2 * Math.PI) {
+    //   ca -= 2 * Math.PI;
+    // }
+
+    // let adjustedDistance = distance * Math.cos(ca);
+
+    // if (inverse > 20 && intersection[i].object.type === "TilemapLayer") {
+    //   //this.graphics.rotateCanvas(3.14);
+    //   this.graphics.lineStyle(5, 0xff00ff, 1.0);
+    //   this.graphics.fillStyle(0xff0000, (inverse - 20) / 400);
+    //   this.graphics.fillRect(950 + i * 2.5, 350, 2.5, inverse);
+    //   this.graphics.fillRect(950 + i * 2.5, 350, 2.5, -inverse);
+    // } else if (
+    //   inverse > 20 &&
+    //   intersection[i].object.type !== "TilemapLayer"
+    // ) {
+    //   this.graphics.lineStyle(5, 0xff00ff, 1.0);
+    //   this.graphics.fillStyle(0x00ff00, (inverse - 20) / 400);
+    //   this.graphics.fillRect(950 + i * 2.5, 350, 2.5, inverse);
+    //   this.graphics.fillRect(950 + i * 2.5, 350, 2.5, -inverse);
+    // }
+  }
+
+  // if (this.square) {
 }
 
 // drawMap(scene, map, mapX, mapY, mapS) {
