@@ -60,28 +60,61 @@ export class GameScene extends Phaser.Scene {
     this.wallsLayer.setCollisionByProperty({ collides: true });
 
     this.coins = this.physics.add.staticGroup();
+    this.powerPills = this.physics.add.staticGroup();
 
-    newMap.filterTiles((tile) => {
-      if (tile.index === -1) {
-        this.coins.create(
-          tile.pixelX + tile.width / 2,
-          tile.pixelY + tile.width / 2,
-          "coin"
-        );
-      }
-    });
     this.ghostSpawner = new GhostSpawner(this, "ghost");
     this.ghostGroup = this.ghostSpawner.group;
-    for (let i = 0; i < 3; i++) {
-      this.ghostSpawner.spawn();
-    }
+
+    newMap.filterTiles((tile) => {
+      switch (tile.index) {
+        case 3:
+          this.coins.create(
+            tile.pixelX + tile.width / 2,
+            tile.pixelY + tile.width / 2,
+            "coin"
+          );
+          break;
+        case 4:
+          this.player = this.createPlayer(
+            tile.pixelX + tile.width / 2,
+            tile.pixelY + tile.width / 2
+          );
+          break;
+        case 5:
+          this.ghostSpawner.spawn(
+            tile.pixelX + tile.width / 2,
+            tile.pixelY + tile.width / 2
+          );
+          break;
+        case 6:
+          this.powerPills.create(
+            tile.pixelX + tile.width / 2,
+            tile.pixelY + tile.width / 2,
+            "powerPill"
+          );
+          break;
+        default:
+          break;
+      }
+      // if (tile.index === 3) {
+      //   this.coins.create(
+      //     tile.pixelX + tile.width / 2,
+      //     tile.pixelY + tile.width / 2,
+      //     "coin"
+      //   );
+      // } else if (tile.index === 4) {
+      //   this.player = this.createPlayer(
+      //     tile.pixelX + tile.width / 2,
+      //     tile.pixelY + tile.width / 2
+      //   );
+      // }
+    });
     this.cursors = this.input.keyboard.createCursorKeys();
-    this.player = this.createPlayer(435, 750);
     this.player.setBounce(0);
     this.player.setDrag(0);
     this.scoreLabel = this.createScoreLabel(16, 16, 0);
     this.music = this.sound.add("background-music", { loop: true });
-    this.music.play();
+    // this.music.play();
 
     this.physics.add.overlap(
       this.player,
@@ -107,30 +140,32 @@ export class GameScene extends Phaser.Scene {
     );
     this.physics.add.collider(this.player, this.wallsLayer);
 
-    // this.physics.add.collider(
-    //   this.player,
-    //   this.ghostGroup,
-    //   this.hitGhost,
-    //   null,
-    //   this
-    // );
+    this.physics.add.collider(
+      this.player,
+      this.ghostGroup,
+      this.hitGhost,
+      null,
+      this
+    );
 
     this.createRaycaster();
 
-    this.createCollectCaster();
+    // this.createCollectCaster();
     // this.cameras.main.setAngle(180)
   }
 
   update() {
     const ghostsArray = this.ghostGroup.getChildren();
-    this.playerMovement(this.cursors);
+    if (this.cursors) {
+      this.playerMovement(this.cursors);
+    }
     ghostsArray.forEach((ghost) => {
       this.enemyMovement(ghost);
     });
 
     this.physics.world.wrap(this.player, 0);
     this.updateRaycaster();
-    this.updateCollectCaster();
+    // this.updateCollectCaster();
   }
 
   createPlayer(xPos, yPos) {
@@ -229,8 +264,10 @@ export class GameScene extends Phaser.Scene {
   }
 
   hitGhost(player, ghost) {
+    this.raycaster.removeMappedObjects(this.wallsLayer);
     if (!this.hasHit && !this.poweredUp) {
-      this.physics.pause();
+      this.player.disableBody();
+      this.cursors = null;
       player.setTint(0xff4444);
       this.submitScore(this.scoreLabel.score);
       this.gameOverText = this.add
@@ -301,9 +338,11 @@ export class GameScene extends Phaser.Scene {
   }
 
   createSquare(intersection) {
+    // console.log(intersection[0]);
     this.graphics.clear();
 
     for (let i = 0; i < intersection.length; i++) {
+      // console.log(i);
       let distance = Phaser.Math.Distance.Between(
         this.ray.origin.x,
         this.ray.origin.y,
@@ -355,7 +394,7 @@ export class GameScene extends Phaser.Scene {
     this.raycaster = this.raycasterPlugin.createRaycaster();
     this.ray = this.raycaster.createRay();
     this.raycaster.mapGameObjects(this.wallsLayer, false, {
-      collisionTiles: [1],
+      collisionTiles: [2],
     });
     this.raycaster.mapGameObjects(this.ghostGroup.getChildren(), true);
     this.ray.setOrigin(this.player.x, this.player.y);
@@ -401,9 +440,9 @@ export class GameScene extends Phaser.Scene {
     this.renderCollectible(intersect);
   }
   renderCollectible(intersect) {
-    this.collectGraphics.clear()
+    this.collectGraphics.clear();
     if (intersect?.object.texture?.key === "coin") {
-      console.log("sprite");
+      // console.log("sprite");
       let distance = Phaser.Math.Distance.Between(
         this.collectRay.origin.x,
         this.collectRay.origin.y,

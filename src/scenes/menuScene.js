@@ -19,8 +19,8 @@ export class MenuScene extends Phaser.Scene {
   }
 
   preload() {
-    this.load.image("tiles", "./tiles.png");
-    this.load.tilemapTiledJSON("tilemap", "./tilemap.json");
+    this.load.image("tiles", "./newTiles.png");
+    this.load.tilemapTiledJSON("tilemap", "./testmaze.json");
     this.load.image("povman", "./povman.png");
     this.load.image("coin", "./coin.png");
     this.load.image("ghost", "./ghost.png");
