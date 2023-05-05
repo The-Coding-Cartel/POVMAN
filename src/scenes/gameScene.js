@@ -94,28 +94,28 @@ export class GameScene extends Phaser.Scene {
     this.load.tilemapTiledJSON(
       `tilemap${this.currentLevel}`,
       `./maze${this.currentLevel}.json`
-    );
-    this.load.audio("footsteps", "./footsteps.mp3");
-  }
+      );
+      this.load.audio("footsteps", "./footsteps.mp3");
+    }
+    
+    create(data) {
+      this.add.rectangle(0, 0, this.canvas.width * 2, 540, 0x00cccc);
+      this.add.rectangle(0, 540, this.canvas.width * 2, 540, 0xdddddd);
+      this.graphics = this.add.graphics();
+      this.collectGraphics = this.add.graphics();
 
-  create(data) {
-    this.add.rectangle(0, 0, this.canvas.width * 2, 540, 0x00cccc);
-    this.add.rectangle(0, 540, this.canvas.width * 2, 540, 0xdddddd);
-    this.graphics = this.add.graphics();
-    this.collectGraphics = this.add.graphics();
-
-    const newMap = this.make.tilemap({
-      key: `tilemap${this.currentLevel}`,
-    });
-    const tileSet = newMap.addTilesetImage("maze", "tiles");
-    newMap.createLayer("floor", tileSet).setVisible(false);
-    this.wallsLayer = newMap.createLayer("walls", tileSet);
-    this.wallsLayer
+      const newMap = this.make.tilemap({
+        key: `tilemap${this.currentLevel}`,
+      });
+      const tileSet = newMap.addTilesetImage("maze", "tiles");
+      newMap.createLayer("floor", tileSet).setVisible(false);
+      this.wallsLayer = newMap.createLayer("walls", tileSet);
+      this.wallsLayer
       .setCollisionByProperty({ collides: true })
       .setVisible(false);
-
-    this.coins = this.physics.add.staticGroup();
-    this.powerPills = this.physics.add.staticGroup();
+      
+      this.coins = this.physics.add.staticGroup();
+      this.powerPills = this.physics.add.staticGroup();
     this.ghostSpawner = new GhostSpawner(this, "ghost");
     this.ghostGroup = this.ghostSpawner.group.setVisible(false);
 
@@ -123,23 +123,23 @@ export class GameScene extends Phaser.Scene {
       switch (tile.index) {
         case 3:
           this.coins
-            .create(
-              tile.pixelX + tile.width / 2,
-              tile.pixelY + tile.width / 2,
-              "coin"
+          .create(
+            tile.pixelX + tile.width / 2,
+            tile.pixelY + tile.width / 2,
+            "coin"
             )
             .setCircle(15);
-          break;
-        case 4:
+            break;
+            case 4:
           this.player = this.createPlayer(
             tile.pixelX + tile.width / 2,
             tile.pixelY + tile.width / 2
-          );
-          break;
-        case 5:
-          this.ghostSpawner.spawn(
-            tile.pixelX + tile.width / 2,
-            tile.pixelY + tile.width / 2
+            );
+            break;
+            case 5:
+              this.ghostSpawner.spawn(
+                tile.pixelX + tile.width / 2,
+                tile.pixelY + tile.width / 2
           );
           break;
         case 6:
@@ -147,17 +147,17 @@ export class GameScene extends Phaser.Scene {
             tile.pixelX + tile.width / 2,
             tile.pixelY + tile.width / 2,
             "powerPill"
-          );
-          break;
-        default:
-          break;
-      }
+            );
+            break;
+            default:
+              break;
+            }
     });
     this.powerPills.setVisible(false);
 
     this.coins.setVisible(false);
     this.ghostGroup.setVisible(false);
-
+    
     this.player.setBounce(0);
     this.player.setDrag(0);
     this.player.setVisible(false);
@@ -167,54 +167,54 @@ export class GameScene extends Phaser.Scene {
       volume: 0.5,
     });
     this.music.play();
-
+    
     this.physics.add.overlap(
       this.player,
       this.coins,
       this.collectCoin,
       null,
       this
-    );
-    this.physics.add.overlap(
-      this.player,
-      this.powerPills,
-      this.collectPowerPill,
-      null,
-      this
-    );
-
-    this.physics.add.collider(
-      this.ghostGroup,
-      this.wallsLayer,
-      this.changeDir,
-      null,
-      this
-    );
-    this.physics.add.collider(this.player, this.wallsLayer);
-
-    this.physics.add.collider(
+      );
+      this.physics.add.overlap(
+        this.player,
+        this.powerPills,
+        this.collectPowerPill,
+        null,
+        this
+        );
+        
+        this.physics.add.collider(
+          this.ghostGroup,
+          this.wallsLayer,
+          this.changeDir,
+          null,
+          this
+          );
+          this.physics.add.collider(this.player, this.wallsLayer);
+          
+          this.physics.add.collider(
       this.player,
       this.ghostGroup,
       this.hitGhost,
       null,
       this
-    );
+      );
 
-    this.footsteps = this.sound.add("footsteps", { loop: true, volume: 2 });
-    console.log(this.currentLevel);
-
-    this.createRaycaster();
-  }
-
-  update() {
-    const ghostsArray = this.ghostGroup.getChildren();
-    if (!this.hasHit) {
-      this.playerMovement(this.cursors);
-      this.updateRaycaster();
+      this.footsteps = this.sound.add("footsteps", { loop: true, volume: 2 });
+      
+      this.createRaycaster();
     }
-    ghostsArray.forEach((ghost) => {
-      this.enemyMovement(ghost);
-    });
+
+    update() {
+      const ghostsArray = this.ghostGroup.getChildren();
+      if (!this.hasHit) {
+        this.playerMovement(this.cursors);
+        console.log(this.player.body.speed);
+        this.updateRaycaster();
+      }
+      ghostsArray.forEach((ghost) => {
+        this.enemyMovement(ghost);
+      });
   }
 
   createPlayer(xPos, yPos) {
@@ -226,7 +226,6 @@ export class GameScene extends Phaser.Scene {
   playerMovement(cursors) {
     const speed = 125 / 2;
     this.player.setVelocity(0);
-    console.log(cursors)
     if (cursors.up.isDown || cursors.down.isDown || cursors.left.isDown || cursors.right.isDown) {
       if (!this.footsteps.isPlaying) {
         this.footsteps.play();
@@ -342,7 +341,7 @@ export class GameScene extends Phaser.Scene {
         delay: 2000,
         callback: () => {
           this.music.stop();
-          this.scene.restart({
+          this.scene.start("gameScene",{
             username: this.username,
             level: this.currentLevel + 1,
             score: this.scoreLabel.score,
@@ -387,7 +386,7 @@ export class GameScene extends Phaser.Scene {
     this.playAgain.on("pointerup", () => {
       this.music.stop();
       this.hasHit = false;
-      this.scene.restart({
+      this.scene.start("gameScene", {
         username: this.username,
         level: 1,
         score: 0,
