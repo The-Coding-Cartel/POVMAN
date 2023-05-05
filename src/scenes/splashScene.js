@@ -12,7 +12,7 @@ export class SplashScene extends Phaser.Scene {
 
   preload() {
     this.load.image("codingCartel", "./coding cartel.png");
-    this.load.image("title-img", "./POVMAN-title.jpg");
+    this.load.image("title-img", "./povmaze.png");
   }
 
   create() {

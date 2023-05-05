@@ -58,7 +58,7 @@ export class MenuScene extends Phaser.Scene {
 
     this.loginButton.setInteractive({ useHandCursor: true });
 
-    this.loginButton.on("pointerdown", () => {
+    this.loginButton.on("pointerup", () => {
       signInWithPopup(auth, googleProvider).then(({ user }) => {
         this.username = user.displayName;
         this.loginButton.destroy();
@@ -69,7 +69,7 @@ export class MenuScene extends Phaser.Scene {
         );
         this.playButton.play("playButtonAnims");
         this.playButton.setInteractive({ useHandCursor: true });
-        this.playButton.on("pointerdown", () => {
+        this.playButton.on("pointerup", () => {
           this.buttonClicked();
         });
       });

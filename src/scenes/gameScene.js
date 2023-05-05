@@ -45,7 +45,6 @@ export class GameScene extends Phaser.Scene {
     this.rightRotate = this.input.keyboard.addKey("E");
 
     this.leftRotate.on("up", () => {
-      console.log(this.playerAngle, "<---- Q");
       if (this.playerAngle === 0) {
         this.playerAngle = 270;
       } else {
@@ -54,7 +53,6 @@ export class GameScene extends Phaser.Scene {
     });
 
     this.rightRotate.on("up", () => {
-      console.log(this.playerAngle, "<---- E");
       if (this.playerAngle === 270) {
         this.playerAngle = 0;
       } else {
@@ -288,12 +286,17 @@ export class GameScene extends Phaser.Scene {
   collectPowerPill(player, powerPill) {
     if (this.currentLevel < 5) {
       this.add
-        .text(350, 700, `Congrats Moving to Level ${this.currentLevel + 1}`, {
-          font: "100px Arial",
-          strokeThickness: 2,
-          color: "#000000",
-          backgroundColor: "#ffffff",
-        })
+        .text(
+          this.cameras.main.width / 2,
+          this.cameras.main.height / 2,
+          `Congrats Moving to Level ${this.currentLevel + 1}`,
+          {
+            font: "50px Arial",
+            strokeThickness: 2,
+            color: "#000000",
+            backgroundColor: "#ffffff",
+          }
+        )
         .setOrigin(0.5);
       this.time.addEvent({
         delay: 2000,
@@ -327,6 +330,27 @@ export class GameScene extends Phaser.Scene {
           backgroundColor: "#ffffff",
         })
         .setOrigin(0.5);
+      this.playAgain = this.add
+        .text(
+          this.canvas.width / 2,
+          this.canvas.height / 2 + 100,
+          "Play Again?",
+          {
+            font: "100px Arial",
+            strokeThickness: 2,
+            color: "#000000",
+            backgroundColor: "#ffffff",
+          }
+        )
+        .setOrigin(0.5);
+      this.playAgain.setInteractive({ useHandCursor: true });
+      this.playAgain.on("pointerup", () => {
+        this.scene.restart({
+          username: this.username,
+          level: 1,
+          score: 0,
+        });
+      });
       this.hasHit = true;
     }
   }
