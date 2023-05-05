@@ -135,7 +135,7 @@ export class GameScene extends Phaser.Scene {
     this.player.setVisible(false);
     this.scoreLabel = this.createScoreLabel(16, 16, data.score || 0);
     this.music = this.sound.add("background-music", { loop: true });
-    // this.music.play();
+    this.music.play();
 
     this.physics.add.overlap(
       this.player,
@@ -286,21 +286,22 @@ export class GameScene extends Phaser.Scene {
   collectPowerPill(player, powerPill) {
     if (this.currentLevel < 5) {
       this.add
-        .text(
-          this.cameras.main.width / 2,
-          this.cameras.main.height / 2,
-          `Congrats Moving to Level ${this.currentLevel + 1}`,
-          {
-            font: "50px Arial",
-            strokeThickness: 2,
-            color: "#000000",
-            backgroundColor: "#ffffff",
-          }
+      .text(
+        this.cameras.main.width / 2,
+        this.cameras.main.height / 2,
+        `Congrats Moving to Level ${this.currentLevel + 1}`,
+        {
+          font: "50px Arial",
+          strokeThickness: 2,
+          color: "#000000",
+          backgroundColor: "#ffffff",
+        }
         )
         .setOrigin(0.5);
-      this.time.addEvent({
-        delay: 2000,
-        callback: () => {
+        this.time.addEvent({
+          delay: 2000,
+          callback: () => {
+          this.music.stop();
           this.scene.restart({
             username: this.username,
             level: this.currentLevel + 1,
@@ -344,6 +345,7 @@ export class GameScene extends Phaser.Scene {
       .setOrigin(0.5);
     this.playAgain.setInteractive({ useHandCursor: true });
     this.playAgain.on("pointerup", () => {
+      this.music.stop();
       this.scene.restart({
         username: this.username,
         level: 1,
