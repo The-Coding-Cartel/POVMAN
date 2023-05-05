@@ -60,7 +60,7 @@ export class MenuScene extends Phaser.Scene {
   }
 
   buttonClicked() {
-    this.scene.start("gameScene", { username: this.username });
+    this.scene.start("gameScene", { username: this.username, level: 1 });
     this.scene.sleep("menuScene");
   }
 }

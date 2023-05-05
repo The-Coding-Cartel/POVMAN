@@ -27,7 +27,7 @@ export class GameScene extends Phaser.Scene {
     this.music = null;
     this.cursors = null;
     this.player = null;
-    this.scoreLabel = null;
+
     this.powerPills = null;
     this.raycaster = null;
     this.ray = null;
@@ -37,16 +37,17 @@ export class GameScene extends Phaser.Scene {
     this.keyPress = false;
   }
   init(data) {
+    this.currentLevel = data.level;
     this.cameras.main.setBackgroundColor("#FFFFFF");
     this.username = data.username;
   }
 
   preload() {
     this.canvas = this.sys.game.canvas;
-    this.load.tilemapTiledJSON("tilemap", "./maze2.json");
+    this.load.tilemapTiledJSON("tilemap", `./maze${this.currentLevel}.json`);
   }
 
-  create() {
+  create(data) {
     this.add.rectangle(0, 0, this.canvas.width, 720, 0x00cccc);
     this.add.rectangle(0, 720, this.canvas.width, 720, 0xdddddd);
     this.graphics = this.add.graphics();
@@ -63,8 +64,7 @@ export class GameScene extends Phaser.Scene {
       .setVisible(false);
 
     this.coins = this.physics.add.staticGroup();
-    this.powerPills = this.physics.add.staticGroup().setVisible(false);
-
+    this.powerPills = this.physics.add.staticGroup();
     this.ghostSpawner = new GhostSpawner(this, "ghost");
     this.ghostGroup = this.ghostSpawner.group.setVisible(false);
 
@@ -100,6 +100,8 @@ export class GameScene extends Phaser.Scene {
           break;
       }
     });
+    this.powerPills.setVisible(false);
+
     this.coins.setVisible(false);
     this.ghostGroup.setVisible(false);
     this.cursors = this.input.keyboard.createCursorKeys();
@@ -122,7 +124,8 @@ export class GameScene extends Phaser.Scene {
 
     this.player.setBounce(0);
     this.player.setDrag(0);
-    this.scoreLabel = this.createScoreLabel(16, 16, 0);
+    this.player.setVisible(false);
+    this.scoreLabel = this.createScoreLabel(16, 16, data.score || 0);
     this.music = this.sound.add("background-music", { loop: true });
     // this.music.play();
 
@@ -273,14 +276,22 @@ export class GameScene extends Phaser.Scene {
   }
 
   collectPowerPill(player, powerPill) {
-    powerPill.disableBody(true, true);
-    this.poweredUp = true;
-    this.player.setTint(0xff4444);
+    this.add
+      .text(350, 700, `Congrats Moving to Level ${this.currentLevel + 1}`, {
+        font: "100px Arial",
+        strokeThickness: 2,
+        color: "#000000",
+        backgroundColor: "#ffffff",
+      })
+      .setOrigin(0.5);
     this.time.addEvent({
       delay: 8000,
       callback: () => {
-        this.poweredUp = false;
-        this.player.clearTint();
+        this.scene.restart({
+          username: this.username,
+          level: this.currentLevel + 1,
+          score: this.scoreLabel.score,
+        });
       },
       callbackScope: this,
       loop: false,
