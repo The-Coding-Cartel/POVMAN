@@ -137,10 +137,11 @@ export class GameScene extends Phaser.Scene {
             );
             break;
             case 5:
-              this.ghostSpawner.spawn(
+              let currentGhost = this.ghostSpawner.spawn(
                 tile.pixelX + tile.width / 2,
                 tile.pixelY + tile.width / 2
           );
+          currentGhost.movementSFX = this.sound.add(`${currentGhost.id} sound`, "./footsteps.m")
           break;
         case 6:
           this.powerPills.create(
@@ -315,6 +316,9 @@ export class GameScene extends Phaser.Scene {
         ghost.setVelocityX(speed);
         break;
     }
+
+    const ghostDistance = Phaser.Math.Distance.Between(this.player.x, this.player.y, ghost.x, ghost.y);
+
   }
 
   collectCoin(player, coin) {
