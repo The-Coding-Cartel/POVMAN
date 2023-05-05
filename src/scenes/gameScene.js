@@ -40,7 +40,7 @@ export class GameScene extends Phaser.Scene {
   }
   init(data) {
     this.currentLevel = data.level;
-    this.cameras.main.setBackgroundColor("#FFFFFF");
+    this.cameras.main.setBackgroundColor("#4E68E0");
     this.username = data.username;
 
     this.leftRotate = this.input.keyboard.addKey("Q");
@@ -74,8 +74,8 @@ export class GameScene extends Phaser.Scene {
   }
 
   create(data) {
-    this.add.rectangle(0, 0, this.canvas.width, 720, 0x00cccc);
-    this.add.rectangle(0, 720, this.canvas.width, 720, 0xdddddd);
+    this.add.rectangle(0, 0, this.canvas.width * 2, 540, 0x00cccc);
+    this.add.rectangle(0, 540, this.canvas.width * 2, 540, 0xdddddd);
     this.graphics = this.add.graphics();
     this.collectGraphics = this.add.graphics();
 
@@ -163,13 +163,13 @@ export class GameScene extends Phaser.Scene {
     );
     this.physics.add.collider(this.player, this.wallsLayer);
 
-    // this.physics.add.collider(
-    //   this.player,
-    //   this.ghostGroup,
-    //   this.hitGhost,
-    //   null,
-    //   this
-    // );
+    this.physics.add.collider(
+      this.player,
+      this.ghostGroup,
+      this.hitGhost,
+      null,
+      this
+    );
 
     this.createRaycaster();
   }
@@ -413,15 +413,15 @@ export class GameScene extends Phaser.Scene {
         const hex = this.RGBtoHex(inverseClamp, 0, 0);
         this.graphics.lineStyle(5, 0xff00ff, 1.0);
         this.graphics.fillStyle(Number(hex));
-        this.graphics.fillRect(0 + i * 3.75, 350, 3.75, inverse);
-        this.graphics.fillRect(0 + i * 3.75, 350, 3.75, -inverse);
+        this.graphics.fillRect(0 + i * 2.8125, 262.5, 2.8125, Phaser.Math.Clamp(inverse, 0, 496));
+        this.graphics.fillRect(0 + i * 2.8125, 262.5, 2.8125, Phaser.Math.Clamp(-inverse, -496, 0));
       } else if (intersection[i].object.type !== "TilemapLayer") {
         const inverseClamp = Math.floor(Phaser.Math.Clamp(inverse, 0, 255));
         const hex = this.RGBtoHex(0, inverseClamp, 0);
         this.graphics.lineStyle(5, 0xff00ff, 1.0);
         this.graphics.fillStyle(Number(hex));
-        this.graphics.fillRect(0 + i * 3.75, 350, 3.75, inverse);
-        this.graphics.fillRect(0 + i * 3.75, 350, 3.75, -inverse);
+        this.graphics.fillRect(0 + i * 2.8125, 262.5, 2.8125, Phaser.Math.Clamp(inverse, 0, 496));
+        this.graphics.fillRect(0 + i * 2.8125, 262.5, 2.8125, Phaser.Math.Clamp(-inverse, -496, 0));
       }
     }
   }
