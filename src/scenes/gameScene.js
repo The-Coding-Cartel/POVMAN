@@ -35,8 +35,6 @@ export class GameScene extends Phaser.Scene {
     this.fov = -30;
     this.playerAngle = 0;
     this.keyPress = false;
-
-    
   }
   init(data) {
     this.currentLevel = data.level;
@@ -54,7 +52,7 @@ export class GameScene extends Phaser.Scene {
         this.playerAngle += -90;
       }
     });
-    
+
     this.rightRotate.on("up", () => {
       console.log(this.playerAngle, "<---- E");
       if (this.playerAngle === 270) {
@@ -97,11 +95,13 @@ export class GameScene extends Phaser.Scene {
     newMap.filterTiles((tile) => {
       switch (tile.index) {
         case 3:
-          this.coins.create(
-            tile.pixelX + tile.width / 2,
-            tile.pixelY + tile.width / 2,
-            "coin"
-          );
+          this.coins
+            .create(
+              tile.pixelX + tile.width / 2,
+              tile.pixelY + tile.width / 2,
+              "coin"
+            )
+            .setCircle(15);
           break;
         case 4:
           this.player = this.createPlayer(
@@ -261,7 +261,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   enemyMovement(ghost) {
-    const speed = 125 / 2;
+    const speed = 50;
     ghost.setVelocity(0);
 
     switch (ghost.direction) {
@@ -286,26 +286,30 @@ export class GameScene extends Phaser.Scene {
   }
 
   collectPowerPill(player, powerPill) {
-    this.add
-      .text(350, 700, `Congrats Moving to Level ${this.currentLevel + 1}`, {
-        font: "100px Arial",
-        strokeThickness: 2,
-        color: "#000000",
-        backgroundColor: "#ffffff",
-      })
-      .setOrigin(0.5);
-    this.time.addEvent({
-      delay: 2000,
-      callback: () => {
-        this.scene.restart({
-          username: this.username,
-          level: this.currentLevel + 1,
-          score: this.scoreLabel.score,
-        });
-      },
-      callbackScope: this,
-      loop: false,
-    });
+    if (this.currentLevel < 5) {
+      this.add
+        .text(350, 700, `Congrats Moving to Level ${this.currentLevel + 1}`, {
+          font: "100px Arial",
+          strokeThickness: 2,
+          color: "#000000",
+          backgroundColor: "#ffffff",
+        })
+        .setOrigin(0.5);
+      this.time.addEvent({
+        delay: 2000,
+        callback: () => {
+          this.scene.restart({
+            username: this.username,
+            level: this.currentLevel + 1,
+            score: this.scoreLabel.score,
+          });
+        },
+        callbackScope: this,
+        loop: false,
+      });
+    } else {
+      this.hitGhost(this.player);
+    }
   }
 
   hitGhost(player, ghost) {
@@ -324,17 +328,6 @@ export class GameScene extends Phaser.Scene {
         })
         .setOrigin(0.5);
       this.hasHit = true;
-    } else if (this.poweredUp && !this.hasHit) {
-      ghost.destroy();
-      this.scoreLabel.add(10);
-      this.time.addEvent({
-        delay: 3000,
-        callback: () => {
-          this.ghostSpawner.spawn();
-        },
-        callbackScope: this,
-        loop: false,
-      });
     }
   }
 
@@ -413,15 +406,35 @@ export class GameScene extends Phaser.Scene {
         const hex = this.RGBtoHex(inverseClamp, 0, 0);
         this.graphics.lineStyle(5, 0xff00ff, 1.0);
         this.graphics.fillStyle(Number(hex));
-        this.graphics.fillRect(0 + i * 2.8125, 262.5, 2.8125, Phaser.Math.Clamp(inverse, 0, 496));
-        this.graphics.fillRect(0 + i * 2.8125, 262.5, 2.8125, Phaser.Math.Clamp(-inverse, -496, 0));
+        this.graphics.fillRect(
+          0 + i * 2.8125,
+          262.5,
+          2.8125,
+          Phaser.Math.Clamp(inverse, 0, 496)
+        );
+        this.graphics.fillRect(
+          0 + i * 2.8125,
+          262.5,
+          2.8125,
+          Phaser.Math.Clamp(-inverse, -496, 0)
+        );
       } else if (intersection[i].object.type !== "TilemapLayer") {
         const inverseClamp = Math.floor(Phaser.Math.Clamp(inverse, 0, 255));
         const hex = this.RGBtoHex(0, inverseClamp, 0);
         this.graphics.lineStyle(5, 0xff00ff, 1.0);
         this.graphics.fillStyle(Number(hex));
-        this.graphics.fillRect(0 + i * 2.8125, 262.5, 2.8125, Phaser.Math.Clamp(inverse, 0, 496));
-        this.graphics.fillRect(0 + i * 2.8125, 262.5, 2.8125, Phaser.Math.Clamp(-inverse, -496, 0));
+        this.graphics.fillRect(
+          0 + i * 2.8125,
+          262.5,
+          2.8125,
+          Phaser.Math.Clamp(inverse, 0, 496)
+        );
+        this.graphics.fillRect(
+          0 + i * 2.8125,
+          262.5,
+          2.8125,
+          Phaser.Math.Clamp(-inverse, -496, 0)
+        );
       }
     }
   }
@@ -465,34 +478,3 @@ export class GameScene extends Phaser.Scene {
     );
   }
 }
-
-// drawMap(scene, map, mapX, mapY, mapS) {
-//   const graphics = scene.add.graphics();
-//   const walls = this.physics.add.staticGroup();
-//   this.powerPills = this.physics.add.staticGroup();
-//   this.coins = this.physics.add.staticGroup();
-
-//   graphics.fillStyle(0xffffff, 1); // Fill color and alpha
-//   graphics.lineStyle(1, 0x000000, 1); // Line width, color, and alpha
-//   for (let i = 0; i < map.length; i++) {
-//     const x = (i % mapX) * mapS;
-//     const y = Math.floor(i / mapX) * mapS;
-//     graphics.strokeRect(x, y, mapS, mapS);
-
-//     switch (map[i]) {
-//       case 0:
-//         this.coins.create(x + mapS / 2, y + mapS / 2, "coin");
-//         graphics.fillRect(x, y, mapS, mapS);
-//         break;
-//       case 1:
-//         walls.create(x + mapS / 2, y + mapS / 2, "wall");
-//         break;
-//       case 5:
-//         graphics.fillRect(x, y, mapS, mapS);
-//         this.powerPills.create(x + mapS / 2, y + mapS / 2, "powerPill");
-//         break;
-//     }
-//   }
-//   scene.add.existing(graphics);
-//   return walls;
-// }
