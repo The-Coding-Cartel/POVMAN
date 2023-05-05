@@ -35,11 +35,34 @@ export class GameScene extends Phaser.Scene {
     this.fov = -30;
     this.playerAngle = 0;
     this.keyPress = false;
+
+    
   }
   init(data) {
     this.currentLevel = data.level;
     this.cameras.main.setBackgroundColor("#FFFFFF");
     this.username = data.username;
+
+    this.leftRotate = this.input.keyboard.addKey("Q");
+    this.rightRotate = this.input.keyboard.addKey("E");
+
+    this.leftRotate.on("up", () => {
+      console.log(this.playerAngle, "<---- Q");
+      if (this.playerAngle === 0) {
+        this.playerAngle = 270;
+      } else {
+        this.playerAngle += -90;
+      }
+    });
+    
+    this.rightRotate.on("up", () => {
+      console.log(this.playerAngle, "<---- E");
+      if (this.playerAngle === 270) {
+        this.playerAngle = 0;
+      } else {
+        this.playerAngle += 90;
+      }
+    });
   }
 
   preload() {
@@ -108,22 +131,6 @@ export class GameScene extends Phaser.Scene {
     this.coins.setVisible(false);
     this.ghostGroup.setVisible(false);
     this.cursors = this.input.keyboard.createCursorKeys();
-    this.leftRotate = this.input.keyboard.addKey("Q");
-    this.leftRotate.on("up", () => {
-      if (this.playerAngle === 0) {
-        this.playerAngle = 270;
-      } else {
-        this.playerAngle += -90;
-      }
-    });
-    this.rightRotate = this.input.keyboard.addKey("E");
-    this.rightRotate.on("up", () => {
-      if (this.playerAngle === 270) {
-        this.playerAngle = 0;
-      } else {
-        this.playerAngle += 90;
-      }
-    });
 
     this.player.setBounce(0);
     this.player.setDrag(0);
@@ -156,13 +163,13 @@ export class GameScene extends Phaser.Scene {
     );
     this.physics.add.collider(this.player, this.wallsLayer);
 
-    this.physics.add.collider(
-      this.player,
-      this.ghostGroup,
-      this.hitGhost,
-      null,
-      this
-    );
+    // this.physics.add.collider(
+    //   this.player,
+    //   this.ghostGroup,
+    //   this.hitGhost,
+    //   null,
+    //   this
+    // );
 
     this.createRaycaster();
   }
@@ -288,7 +295,7 @@ export class GameScene extends Phaser.Scene {
       })
       .setOrigin(0.5);
     this.time.addEvent({
-      delay: 8000,
+      delay: 2000,
       callback: () => {
         this.scene.restart({
           username: this.username,
@@ -406,15 +413,15 @@ export class GameScene extends Phaser.Scene {
         const hex = this.RGBtoHex(inverseClamp, 0, 0);
         this.graphics.lineStyle(5, 0xff00ff, 1.0);
         this.graphics.fillStyle(Number(hex));
-        this.graphics.fillRect(0 + i * 2.5, 350, 2.5, inverse);
-        this.graphics.fillRect(0 + i * 2.5, 350, 2.5, -inverse);
+        this.graphics.fillRect(0 + i * 3.75, 350, 3.75, inverse);
+        this.graphics.fillRect(0 + i * 3.75, 350, 3.75, -inverse);
       } else if (intersection[i].object.type !== "TilemapLayer") {
         const inverseClamp = Math.floor(Phaser.Math.Clamp(inverse, 0, 255));
         const hex = this.RGBtoHex(0, inverseClamp, 0);
         this.graphics.lineStyle(5, 0xff00ff, 1.0);
         this.graphics.fillStyle(Number(hex));
-        this.graphics.fillRect(0 + i * 2.5, 350, 2.5, inverse);
-        this.graphics.fillRect(0 + i * 2.5, 350, 2.5, -inverse);
+        this.graphics.fillRect(0 + i * 3.75, 350, 3.75, inverse);
+        this.graphics.fillRect(0 + i * 3.75, 350, 3.75, -inverse);
       }
     }
   }
@@ -436,9 +443,9 @@ export class GameScene extends Phaser.Scene {
       this.ray.setAngleDeg(this.fov);
       const intersect = this.ray.cast();
       intersections.push(intersect);
-      this.fov += 0.125;
+      this.fov += 0.1875;
     }
-    this.fov = this.playerAngle - 30;
+    this.fov = this.playerAngle - 45;
     this.ray.setOrigin(this.player.x, this.player.y);
 
     this.createSquare(intersections);
