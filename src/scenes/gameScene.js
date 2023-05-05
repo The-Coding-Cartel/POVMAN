@@ -44,7 +44,10 @@ export class GameScene extends Phaser.Scene {
 
   preload() {
     this.canvas = this.sys.game.canvas;
-    this.load.tilemapTiledJSON("tilemap", `./maze${this.currentLevel}.json`);
+    this.load.tilemapTiledJSON(
+      `tilemap${this.currentLevel}`,
+      `./maze${this.currentLevel}.json`
+    );
   }
 
   create(data) {
@@ -54,7 +57,7 @@ export class GameScene extends Phaser.Scene {
     this.collectGraphics = this.add.graphics();
 
     const newMap = this.make.tilemap({
-      key: "tilemap",
+      key: `tilemap${this.currentLevel}`,
     });
     const tileSet = newMap.addTilesetImage("maze", "tiles");
     newMap.createLayer("floor", tileSet).setVisible(false);
