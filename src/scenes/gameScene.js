@@ -316,43 +316,41 @@ export class GameScene extends Phaser.Scene {
   }
 
   hitGhost(player, ghost) {
+    this.player.disableBody();
+    this.cursors = null;
     this.raycaster.removeMappedObjects(this.wallsLayer);
-    if (!this.hasHit && !this.poweredUp) {
-      this.player.disableBody();
-      this.cursors = null;
-      player.setTint(0xff4444);
-      this.submitScore(this.scoreLabel.score);
-      this.gameOverText = this.add
-        .text(this.canvas.width / 2, this.canvas.height / 2, "Game Over", {
+    player.setTint(0xff4444);
+    this.submitScore(this.scoreLabel.score);
+    this.gameOverText = this.add
+      .text(this.canvas.width / 2, this.canvas.height / 2, "Game Over", {
+        font: "100px Arial",
+        strokeThickness: 2,
+        color: "#000000",
+        backgroundColor: "#ffffff",
+      })
+      .setOrigin(0.5);
+    this.playAgain = this.add
+      .text(
+        this.canvas.width / 2,
+        this.canvas.height / 2 + 100,
+        "Play Again?",
+        {
           font: "100px Arial",
           strokeThickness: 2,
           color: "#000000",
           backgroundColor: "#ffffff",
-        })
-        .setOrigin(0.5);
-      this.playAgain = this.add
-        .text(
-          this.canvas.width / 2,
-          this.canvas.height / 2 + 100,
-          "Play Again?",
-          {
-            font: "100px Arial",
-            strokeThickness: 2,
-            color: "#000000",
-            backgroundColor: "#ffffff",
-          }
-        )
-        .setOrigin(0.5);
-      this.playAgain.setInteractive({ useHandCursor: true });
-      this.playAgain.on("pointerup", () => {
-        this.scene.restart({
-          username: this.username,
-          level: 1,
-          score: 0,
-        });
+        }
+      )
+      .setOrigin(0.5);
+    this.playAgain.setInteractive({ useHandCursor: true });
+    this.playAgain.on("pointerup", () => {
+      this.scene.restart({
+        username: this.username,
+        level: 1,
+        score: 0,
       });
-      this.hasHit = true;
-    }
+    });
+    this.physics.pause();
   }
 
   changeDir(ghost, wall) {
@@ -406,8 +404,8 @@ export class GameScene extends Phaser.Scene {
       let distance = Phaser.Math.Distance.Between(
         this.ray.origin.x,
         this.ray.origin.y,
-        intersection[i].x || 0,
-        intersection[i].y || 0
+        intersection[i]?.x || 0,
+        intersection[i]?.y || 0
       );
 
       let ca = this.playerAngle - this.fov;
