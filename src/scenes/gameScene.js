@@ -11,9 +11,6 @@ import {
   serverTimestamp,
 } from "@firebase/firestore";
 import { firestore } from "../firebase";
-export const mapX = 28,
-  mapY = 31,
-  mapS = 32;
 
 export class GameScene extends Phaser.Scene {
   constructor() {
@@ -35,8 +32,7 @@ export class GameScene extends Phaser.Scene {
     this.powerPills = null;
     this.raycaster = null;
     this.ray = null;
-    this.collectCaster = null;
-    this.collectRay = null;
+
     this.fov = -30;
     this.playerAngle = 0;
     this.keyPress = false;
@@ -104,22 +100,26 @@ export class GameScene extends Phaser.Scene {
         default:
           break;
       }
-      // if (tile.index === 3) {
-      //   this.coins.create(
-      //     tile.pixelX + tile.width / 2,
-      //     tile.pixelY + tile.width / 2,
-      //     "coin"
-      //   );
-      // } else if (tile.index === 4) {
-      //   this.player = this.createPlayer(
-      //     tile.pixelX + tile.width / 2,
-      //     tile.pixelY + tile.width / 2
-      //   );
-      // }
     });
     this.coins.setVisible(false);
     this.ghostGroup.setVisible(false);
     this.cursors = this.input.keyboard.createCursorKeys();
+    this.leftRotate = this.input.keyboard.addKey("Q");
+    this.leftRotate.on("up", () => {
+      if (this.playerAngle === 0) {
+        this.playerAngle = 270;
+      } else {
+        this.playerAngle += -90;
+      }
+    });
+    this.rightRotate = this.input.keyboard.addKey("E");
+    this.rightRotate.on("up", () => {
+      if (this.playerAngle === 270) {
+        this.playerAngle = 0;
+      } else {
+        this.playerAngle += 90;
+      }
+    });
 
     this.player.setBounce(0);
     this.player.setDrag(0);
@@ -160,9 +160,6 @@ export class GameScene extends Phaser.Scene {
     );
 
     this.createRaycaster();
-
-    // this.createCollectCaster();
-    // this.cameras.main.setAngle(180)
   }
 
   update() {
@@ -174,15 +171,12 @@ export class GameScene extends Phaser.Scene {
     ghostsArray.forEach((ghost) => {
       this.enemyMovement(ghost);
     });
-
-    this.physics.world.wrap(this.player, 0);
-    // this.updateCollectCaster();
   }
 
   createPlayer(xPos, yPos) {
     this.direction = "right";
     const player = this.physics.add.sprite(xPos, yPos, "povman").setScale(0.6);
-    player.setCircle(16);
+    player.setCircle(12);
     return player;
   }
 
@@ -221,14 +215,6 @@ export class GameScene extends Phaser.Scene {
           break;
       }
     }
-    // this.cursors.left.once("down", () => {
-    //   if (this.playerAngle === 0) {
-    //     this.playerAngle = 270
-    //   } else {
-    //     this.playerAngle += -90;
-    //   }
-    //   console.log(this.playerAngle);
-    // });
 
     if (cursors.left.isDown) {
       if (this.keyPress === false) {
@@ -238,7 +224,6 @@ export class GameScene extends Phaser.Scene {
           this.playerAngle += -90;
         }
         this.keyPress = true;
-        console.log(this.playerAngle);
       }
     } else if (cursors.right.isDown) {
       if (this.keyPress === false) {
@@ -248,7 +233,6 @@ export class GameScene extends Phaser.Scene {
           this.playerAngle += 90;
         }
         this.keyPress = true;
-        console.log(this.playerAngle);
       }
     }
 
@@ -335,7 +319,7 @@ export class GameScene extends Phaser.Scene {
 
   createScoreLabel(x, y, score) {
     const style = { fontSize: "32px", fill: "#000" };
-    const label = new ScoreLabel(this, x, y, score, style);
+    const label = new ScoreLabel(this, 350, y, score, style).setOrigin(0.5);
     this.add.existing(label);
     return label;
   }
@@ -372,11 +356,9 @@ export class GameScene extends Phaser.Scene {
   }
 
   createSquare(intersection) {
-    // console.log(intersection[0]);
     this.graphics.clear();
 
     for (let i = 0; i < intersection.length; i++) {
-      // console.log(i);
       let distance = Phaser.Math.Distance.Between(
         this.ray.origin.x,
         this.ray.origin.y,
@@ -395,32 +377,23 @@ export class GameScene extends Phaser.Scene {
         ca -= 2 * Math.PI;
       }
 
-      let adjustedDistance = distance * Math.cos(ca);
+      // let adjustedDistance = distance * Math.cos(ca);  -- Fish Eye
 
       let inverse = (32 * 320) / distance;
       if (intersection[i].object.type === "TilemapLayer") {
-        //this.graphics.rotateCanvas(3.14);
         const hex = this.RGBtoHex(Math.floor(inverse), 0, 0);
         this.graphics.lineStyle(5, 0xff00ff, 1.0);
         this.graphics.fillStyle(Number(hex));
         this.graphics.fillRect(0 + i * 2.5, 350, 2.5, inverse);
         this.graphics.fillRect(0 + i * 2.5, 350, 2.5, -inverse);
       } else if (intersection[i].object.type !== "TilemapLayer") {
-        const hex = this.RGBtoHex(0, Math.floor(inverse), 0)
+        const hex = this.RGBtoHex(0, Math.floor(inverse), 0);
         this.graphics.lineStyle(5, 0xff00ff, 1.0);
         this.graphics.fillStyle(Number(hex));
         this.graphics.fillRect(0 + i * 2.5, 350, 2.5, inverse);
         this.graphics.fillRect(0 + i * 2.5, 350, 2.5, -inverse);
       }
     }
-
-    // if (this.square) {
-    //   this.square.clear();
-    // }
-    // this.square = this.add.graphics();
-    // this.square.lineStyle(5, 0xff00ff, 1.0);
-    // this.square.fillStyle(0xffffff, 1.0);
-    // this.square.fillRect(950, 50, 20, inverse);
   }
 
   createRaycaster() {
@@ -445,79 +418,7 @@ export class GameScene extends Phaser.Scene {
     this.fov = this.playerAngle - 30;
     this.ray.setOrigin(this.player.x, this.player.y);
 
-    // const distance = Phaser.Math.Distance.Between(
-    //   this.ray.origin.x,
-    //   this.ray.origin.y,
-    //   intersection.x,
-    //   intersection.y
-    // );
-
     this.createSquare(intersections);
-    // console.log("🚀 ~ file: gameScene.js:298 ~ intersection:", intersection);
-    // console.log("ORIGIN", this.ray.origin);
-  }
-
-  createCollectCaster() {
-    this.collectCaster = this.raycasterPlugin.createRaycaster({ debug: true });
-    this.collectRay = this.collectCaster.createRay();
-    this.collectCaster.mapGameObjects(this.wallsLayer, false, {
-      collisionTiles: [1],
-    });
-    this.collectCaster.mapGameObjects(this.coins.getChildren(), true);
-    this.collectRay.setOrigin(this.player.x, this.player.y);
-    this.collectRay.setAngleDeg(0);
-  }
-  updateCollectCaster() {
-    this.collectRay.setOrigin(this.player.x, this.player.y);
-    this.collectRay.setAngleDeg(this.playerAngle);
-    const intersect = this.collectRay.cast();
-    this.renderCollectible(intersect);
-  }
-  renderCollectible(intersect) {
-    this.collectGraphics.clear();
-    if (intersect?.object.texture?.key === "coin") {
-      // console.log("sprite");
-      let distance = Phaser.Math.Distance.Between(
-        this.collectRay.origin.x,
-        this.collectRay.origin.y,
-        intersect.x,
-        intersect.y
-      );
-
-      let inverse = (32 * 320) / distance;
-      this.collectGraphics.lineStyle(5, 0xff00ff, 1.0);
-      this.collectGraphics.fillStyle(0xffd700, (inverse - 20) / 400);
-      this.collectGraphics.fillRect(1547.5, 450, 25, 25);
-    }
-
-    // let ca = this.playerAngle - this.fov;
-    // ca = ca * 0.0174533;
-
-    // if (ca < 0) {
-    //   ca += 2 * Math.PI;
-    // }
-
-    // if (ca > 2 * Math.PI) {
-    //   ca -= 2 * Math.PI;
-    // }
-
-    // let adjustedDistance = distance * Math.cos(ca);
-
-    // if (inverse > 20 && intersection[i].object.type === "TilemapLayer") {
-    //   //this.graphics.rotateCanvas(3.14);
-    //   this.graphics.lineStyle(5, 0xff00ff, 1.0);
-    //   this.graphics.fillStyle(0xff0000, (inverse - 20) / 400);
-    //   this.graphics.fillRect(950 + i * 2.5, 350, 2.5, inverse);
-    //   this.graphics.fillRect(950 + i * 2.5, 350, 2.5, -inverse);
-    // } else if (
-    //   inverse > 20 &&
-    //   intersection[i].object.type !== "TilemapLayer"
-    // ) {
-    //   this.graphics.lineStyle(5, 0xff00ff, 1.0);
-    //   this.graphics.fillStyle(0x00ff00, (inverse - 20) / 400);
-    //   this.graphics.fillRect(950 + i * 2.5, 350, 2.5, inverse);
-    //   this.graphics.fillRect(950 + i * 2.5, 350, 2.5, -inverse);
-    // }
   }
 
   colorToHex(color) {
@@ -533,8 +434,6 @@ export class GameScene extends Phaser.Scene {
       this.colorToHex(blue)
     );
   }
-
-  // if (this.square) {
 }
 
 // drawMap(scene, map, mapX, mapY, mapS) {
