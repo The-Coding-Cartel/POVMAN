@@ -6,6 +6,8 @@ export default class GhostSpawner {
     this.key = ghostKey;
 
     this._group = this.scene.physics.add.group();
+
+    this.id = 0;
   }
 
   get group() {
@@ -17,6 +19,7 @@ export default class GhostSpawner {
     // ghost.setCircle(15);
     ghost.setCollideWorldBounds(true);
     ghost.direction = "up";
+    ghost.id = this.id++;
 
     return ghost;
   }
