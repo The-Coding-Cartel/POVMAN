@@ -1,8 +1,6 @@
 import Phaser from "phaser";
-import { map } from "../assets/mapsarray";
 import ScoreLabel from "../ui/scoreLabel";
 import GhostSpawner from "../assets/ghostSpawner";
-
 import {
   addDoc,
   collection,
@@ -12,48 +10,135 @@ import {
   limit,
   serverTimestamp,
 } from "@firebase/firestore";
-
 import { firestore } from "../firebase";
-
-export const mapX = 28,
-  mapY = 31,
-  mapS = 30;
 
 export class GameScene extends Phaser.Scene {
   constructor() {
     super("gameScene");
-    this.direction = "up";
     this.enemyDirection = "up";
-    this.scoreLabel = undefined;
-    this.ghostSpawner = undefined;
+    this.scoreLabel = null;
+    this.ghostSpawner = null;
+    this.ghostGroup = null;
     this.hasHit = false;
     this.poweredUp = false;
+    this.username = null;
+    this.wallsLayer = null;
+    this.coins = null;
+    this.music = null;
+    this.cursors = null;
+    this.player = null;
+
+    this.powerPills = null;
+    this.raycaster = null;
+    this.ray = null;
+
+    this.fov = -30;
+    this.playerAngle = 0;
+    this.keyPress = false;
+
+    
   }
   init(data) {
-    this.cameras.main.setBackgroundColor("#000000");
+    this.currentLevel = data.level;
+    this.cameras.main.setBackgroundColor("#FFFFFF");
     this.username = data.username;
+
+    this.leftRotate = this.input.keyboard.addKey("Q");
+    this.rightRotate = this.input.keyboard.addKey("E");
+
+    this.leftRotate.on("up", () => {
+      console.log(this.playerAngle, "<---- Q");
+      if (this.playerAngle === 0) {
+        this.playerAngle = 270;
+      } else {
+        this.playerAngle += -90;
+      }
+    });
+    
+    this.rightRotate.on("up", () => {
+      console.log(this.playerAngle, "<---- E");
+      if (this.playerAngle === 270) {
+        this.playerAngle = 0;
+      } else {
+        this.playerAngle += 90;
+      }
+    });
   }
 
   preload() {
     this.canvas = this.sys.game.canvas;
-    console.log("loading image...");
-    this.load.image("wall", "./wall.png");
-    this.load.image("povman", "./povman.png");
-    this.load.image("coin", "./coin.png");
-    this.load.image("ghost", "./ghost.png");
-    this.load.image("powerPill", "./powerPill.png");
-    this.load.audio("background-music", "./background.wav");
+    this.load.tilemapTiledJSON(
+      `tilemap${this.currentLevel}`,
+      `./maze${this.currentLevel}.json`
+    );
   }
 
-  create() {
-    this.music = this.sound.add("background-music", { loop: true });
+  create(data) {
+    this.add.rectangle(0, 0, this.canvas.width, 720, 0x00cccc);
+    this.add.rectangle(0, 720, this.canvas.width, 720, 0xdddddd);
+    this.graphics = this.add.graphics();
+    this.collectGraphics = this.add.graphics();
 
-    this.music.play();
+    const newMap = this.make.tilemap({
+      key: `tilemap${this.currentLevel}`,
+    });
+    const tileSet = newMap.addTilesetImage("maze", "tiles");
+    newMap.createLayer("floor", tileSet).setVisible(false);
+    this.wallsLayer = newMap.createLayer("walls", tileSet);
+    this.wallsLayer
+      .setCollisionByProperty({ collides: true })
+      .setVisible(false);
+
+    this.coins = this.physics.add.staticGroup();
+    this.powerPills = this.physics.add.staticGroup();
+    this.ghostSpawner = new GhostSpawner(this, "ghost");
+    this.ghostGroup = this.ghostSpawner.group.setVisible(false);
+
+    newMap.filterTiles((tile) => {
+      switch (tile.index) {
+        case 3:
+          this.coins.create(
+            tile.pixelX + tile.width / 2,
+            tile.pixelY + tile.width / 2,
+            "coin"
+          );
+          break;
+        case 4:
+          this.player = this.createPlayer(
+            tile.pixelX + tile.width / 2,
+            tile.pixelY + tile.width / 2
+          );
+          break;
+        case 5:
+          this.ghostSpawner.spawn(
+            tile.pixelX + tile.width / 2,
+            tile.pixelY + tile.width / 2
+          );
+          break;
+        case 6:
+          this.powerPills.create(
+            tile.pixelX + tile.width / 2,
+            tile.pixelY + tile.width / 2,
+            "powerPill"
+          );
+          break;
+        default:
+          break;
+      }
+    });
+    this.powerPills.setVisible(false);
+
+    this.coins.setVisible(false);
+    this.ghostGroup.setVisible(false);
     this.cursors = this.input.keyboard.createCursorKeys();
-    this.walls = this.drawMap(this, map, mapX, mapY, mapS);
-    this.player = this.drawPlayer(430, 705);
-    this.scoreLabel = this.createScoreLabel(16, 16, 0);
-    this.physics.add.collider(this.player, this.walls);
+
+    this.player.setBounce(0);
+    this.player.setDrag(0);
+    this.player.setVisible(false);
+    this.scoreLabel = this.createScoreLabel(16, 16, data.score || 0);
+    this.music = this.sound.add("background-music", { loop: true });
+    // this.music.play();
+
     this.physics.add.overlap(
       this.player,
       this.coins,
@@ -68,119 +153,115 @@ export class GameScene extends Phaser.Scene {
       null,
       this
     );
-    this.ghostSpawner = new GhostSpawner(this, "ghost");
-    this.ghostGroup = this.ghostSpawner.group;
 
     this.physics.add.collider(
       this.ghostGroup,
-      this.walls,
+      this.wallsLayer,
       this.changeDir,
       null,
       this
     );
+    this.physics.add.collider(this.player, this.wallsLayer);
 
-    for (let i = 0; i < 3; i++) {
-      this.ghostSpawner.spawn();
-    }
+    // this.physics.add.collider(
+    //   this.player,
+    //   this.ghostGroup,
+    //   this.hitGhost,
+    //   null,
+    //   this
+    // );
 
-    this.physics.add.collider(
-      this.player,
-      this.ghostGroup,
-      this.hitGhost,
-      null,
-      this
-    );
+    this.createRaycaster();
   }
 
   update() {
-    this.ghostsArray = this.ghostGroup.getChildren();
-    this.playerMovement(this.cursors);
-    this.ghostsArray.forEach((ghost) => {
+    const ghostsArray = this.ghostGroup.getChildren();
+    if (this.cursors) {
+      this.playerMovement(this.cursors);
+      this.updateRaycaster();
+    }
+    ghostsArray.forEach((ghost) => {
       this.enemyMovement(ghost);
     });
-
-    this.physics.world.wrap(this.player, 0);
   }
 
-  drawMap(scene, map, mapX, mapY, mapS) {
-    const graphics = scene.add.graphics();
-    const walls = this.physics.add.staticGroup();
-    this.powerPills = this.physics.add.staticGroup();
-    this.coins = this.physics.add.staticGroup();
-
-    graphics.fillStyle(0xffffff, 1); // Fill color and alpha
-    graphics.lineStyle(1, 0x000000, 1); // Line width, color, and alpha
-    for (let i = 0; i < map.length; i++) {
-      const x = (i % mapX) * mapS;
-      const y = Math.floor(i / mapX) * mapS;
-      graphics.strokeRect(x, y, mapS, mapS);
-
-      switch (map[i]) {
-        case 0:
-          this.coins.create(x + mapS / 2, y + mapS / 2, "coin");
-          graphics.fillRect(x, y, mapS, mapS);
-          break;
-        case 1:
-          walls.create(x + mapS / 2, y + mapS / 2, "wall");
-          break;
-        case 5:
-          graphics.fillRect(x, y, mapS, mapS);
-          this.powerPills.create(x + mapS / 2, y + mapS / 2, "powerPill");
-          break;
-      }
-    }
-    scene.add.existing(graphics);
-    return walls;
-  }
-
-  drawPlayer(xPos, yPos) {
-    const player = this.physics.add.sprite(xPos, yPos, "povman").setScale(0.96);
-    player.setCircle(15);
+  createPlayer(xPos, yPos) {
+    const player = this.physics.add.sprite(xPos, yPos, "povman").setScale(0.6);
+    player.setCircle(12);
     return player;
   }
 
   playerMovement(cursors) {
-    const speed = 125;
+    const speed = 125 / 2;
     this.player.setVelocity(0);
 
-    switch (this.direction) {
-      case "up":
-        this.player.setVelocityY(-speed);
-        break;
-      case "down":
-        this.player.setVelocityY(speed);
-        break;
-      case "left":
-        this.player.setVelocityX(-speed);
-        break;
-      case "right":
-        this.player.setVelocityX(speed);
-        break;
-    }
-
     if (cursors.up.isDown) {
-      this.player.setVelocityY(-speed);
-
-      this.direction = "up";
+      switch (this.playerAngle) {
+        case 270:
+          this.player.setVelocityY(-speed);
+          break;
+        case 90:
+          this.player.setVelocityY(speed);
+          break;
+        case 180:
+          this.player.setVelocityX(-speed);
+          break;
+        case 0:
+          this.player.setVelocityX(speed);
+          break;
+      }
     } else if (cursors.down.isDown) {
-      this.player.setVelocityY(speed);
-
-      this.direction = "down";
+      switch (this.playerAngle) {
+        case 270:
+          this.player.setVelocityY(speed);
+          break;
+        case 90:
+          this.player.setVelocityY(-speed);
+          break;
+        case 180:
+          this.player.setVelocityX(speed);
+          break;
+        case 0:
+          this.player.setVelocityX(-speed);
+          break;
+      }
     }
 
     if (cursors.left.isDown) {
-      this.player.setVelocityX(-speed);
-
-      this.direction = "left";
+      switch (this.playerAngle) {
+        case 270:
+          this.player.setVelocityX(-speed);
+          break;
+        case 90:
+          this.player.setVelocityX(speed);
+          break;
+        case 180:
+          this.player.setVelocityY(speed);
+          break;
+        case 0:
+          this.player.setVelocityY(-speed);
+          break;
+      }
     } else if (cursors.right.isDown) {
-      this.player.setVelocityX(speed);
-
-      this.direction = "right";
+      switch (this.playerAngle) {
+        case 270:
+          this.player.setVelocityX(speed);
+          break;
+        case 90:
+          this.player.setVelocityX(-speed);
+          break;
+        case 180:
+          this.player.setVelocityY(-speed);
+          break;
+        case 0:
+          this.player.setVelocityY(speed);
+          break;
+      }
     }
   }
 
   enemyMovement(ghost) {
-    const speed = 125;
+    const speed = 125 / 2;
     ghost.setVelocity(0);
 
     switch (ghost.direction) {
@@ -205,14 +286,22 @@ export class GameScene extends Phaser.Scene {
   }
 
   collectPowerPill(player, powerPill) {
-    powerPill.disableBody(true, true);
-    this.poweredUp = true;
-    this.player.setTint(0xff4444);
+    this.add
+      .text(350, 700, `Congrats Moving to Level ${this.currentLevel + 1}`, {
+        font: "100px Arial",
+        strokeThickness: 2,
+        color: "#000000",
+        backgroundColor: "#ffffff",
+      })
+      .setOrigin(0.5);
     this.time.addEvent({
-      delay: 8000,
+      delay: 2000,
       callback: () => {
-        this.poweredUp = false;
-        this.player.clearTint();
+        this.scene.restart({
+          username: this.username,
+          level: this.currentLevel + 1,
+          score: this.scoreLabel.score,
+        });
       },
       callbackScope: this,
       loop: false,
@@ -220,8 +309,10 @@ export class GameScene extends Phaser.Scene {
   }
 
   hitGhost(player, ghost) {
+    this.raycaster.removeMappedObjects(this.wallsLayer);
     if (!this.hasHit && !this.poweredUp) {
-      this.physics.pause();
+      this.player.disableBody();
+      this.cursors = null;
       player.setTint(0xff4444);
       this.submitScore(this.scoreLabel.score);
       this.gameOverText = this.add
@@ -248,25 +339,14 @@ export class GameScene extends Phaser.Scene {
   }
 
   changeDir(ghost, wall) {
-    // if the direction your trying to go is blocked set direction to previous direction
     const dirs = ["up", "left", "down", "right"];
     const index = Phaser.Math.Between(0, 3);
     ghost.direction = dirs[index];
-
-    // if (!ghost.body.touching.up) {
-    //   this.enemyDirection = "up";
-    // } else if (!ghost.body.touching.left) {
-    //   this.enemyDirection = "left";
-    // } else if (!ghost.body.touching.down) {
-    //   this.enemyDirection = "down";
-    // } else if (!ghost.body.touching.right) {
-    //   this.enemyDirection = "right";
-    // }
   }
 
   createScoreLabel(x, y, score) {
     const style = { fontSize: "32px", fill: "#000" };
-    const label = new ScoreLabel(this, x, y, score, style);
+    const label = new ScoreLabel(this, 350, y, score, style).setOrigin(0.5);
     this.add.existing(label);
     return label;
   }
@@ -294,7 +374,6 @@ export class GameScene extends Phaser.Scene {
       })
       .then((querySnapshot) => {
         querySnapshot.forEach((doc) => {
-          // doc.data() is never undefined for query doc snapshots
           highScores.push(doc.data());
         });
         console.log(highScores);
@@ -302,4 +381,118 @@ export class GameScene extends Phaser.Scene {
       })
       .catch((err) => console.log(err));
   }
+
+  createSquare(intersection) {
+    this.graphics.clear();
+
+    for (let i = 0; i < intersection.length; i++) {
+      let distance = Phaser.Math.Distance.Between(
+        this.ray.origin.x,
+        this.ray.origin.y,
+        intersection[i].x || 0,
+        intersection[i].y || 0
+      );
+
+      let ca = this.playerAngle - this.fov;
+      ca = ca * 0.0174533;
+
+      if (ca < 0) {
+        ca += 2 * Math.PI;
+      }
+
+      if (ca > 2 * Math.PI) {
+        ca -= 2 * Math.PI;
+      }
+
+      // let adjustedDistance = distance * Math.cos(ca);  -- Fish Eye
+
+      let inverse = (32 * 320) / distance;
+      if (intersection[i].object.type === "TilemapLayer") {
+        const inverseClamp = Math.floor(Phaser.Math.Clamp(inverse, 0, 255));
+
+        const hex = this.RGBtoHex(inverseClamp, 0, 0);
+        this.graphics.lineStyle(5, 0xff00ff, 1.0);
+        this.graphics.fillStyle(Number(hex));
+        this.graphics.fillRect(0 + i * 3.75, 350, 3.75, inverse);
+        this.graphics.fillRect(0 + i * 3.75, 350, 3.75, -inverse);
+      } else if (intersection[i].object.type !== "TilemapLayer") {
+        const inverseClamp = Math.floor(Phaser.Math.Clamp(inverse, 0, 255));
+        const hex = this.RGBtoHex(0, inverseClamp, 0);
+        this.graphics.lineStyle(5, 0xff00ff, 1.0);
+        this.graphics.fillStyle(Number(hex));
+        this.graphics.fillRect(0 + i * 3.75, 350, 3.75, inverse);
+        this.graphics.fillRect(0 + i * 3.75, 350, 3.75, -inverse);
+      }
+    }
+  }
+
+  createRaycaster() {
+    this.raycaster = this.raycasterPlugin.createRaycaster();
+    this.ray = this.raycaster.createRay();
+    this.raycaster.mapGameObjects(this.wallsLayer, false, {
+      collisionTiles: [2],
+    });
+    this.raycaster.mapGameObjects(this.ghostGroup.getChildren(), true);
+    this.ray.setOrigin(this.player.x, this.player.y);
+    this.ray.setAngleDeg(0);
+  }
+
+  updateRaycaster() {
+    const intersections = [];
+    for (let i = 0; i < 480; i++) {
+      this.ray.setAngleDeg(this.fov);
+      const intersect = this.ray.cast();
+      intersections.push(intersect);
+      this.fov += 0.1875;
+    }
+    this.fov = this.playerAngle - 45;
+    this.ray.setOrigin(this.player.x, this.player.y);
+
+    this.createSquare(intersections);
+  }
+
+  colorToHex(color) {
+    const hexadecimal = color.toString(16);
+    return hexadecimal.length == 1 ? "0" + hexadecimal : hexadecimal;
+  }
+
+  RGBtoHex(red, green, blue) {
+    return (
+      "0x" +
+      this.colorToHex(red) +
+      this.colorToHex(green) +
+      this.colorToHex(blue)
+    );
+  }
 }
+
+// drawMap(scene, map, mapX, mapY, mapS) {
+//   const graphics = scene.add.graphics();
+//   const walls = this.physics.add.staticGroup();
+//   this.powerPills = this.physics.add.staticGroup();
+//   this.coins = this.physics.add.staticGroup();
+
+//   graphics.fillStyle(0xffffff, 1); // Fill color and alpha
+//   graphics.lineStyle(1, 0x000000, 1); // Line width, color, and alpha
+//   for (let i = 0; i < map.length; i++) {
+//     const x = (i % mapX) * mapS;
+//     const y = Math.floor(i / mapX) * mapS;
+//     graphics.strokeRect(x, y, mapS, mapS);
+
+//     switch (map[i]) {
+//       case 0:
+//         this.coins.create(x + mapS / 2, y + mapS / 2, "coin");
+//         graphics.fillRect(x, y, mapS, mapS);
+//         break;
+//       case 1:
+//         walls.create(x + mapS / 2, y + mapS / 2, "wall");
+//         break;
+//       case 5:
+//         graphics.fillRect(x, y, mapS, mapS);
+//         this.powerPills.create(x + mapS / 2, y + mapS / 2, "powerPill");
+//         break;
+//     }
+//   }
+//   scene.add.existing(graphics);
+//   return walls;
+// }
