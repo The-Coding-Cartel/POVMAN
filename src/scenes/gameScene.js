@@ -217,27 +217,35 @@ export class GameScene extends Phaser.Scene {
     }
 
     if (cursors.left.isDown) {
-      if (this.keyPress === false) {
-        if (this.playerAngle === 0) {
-          this.playerAngle = 270;
-        } else {
-          this.playerAngle += -90;
-        }
-        this.keyPress = true;
+      switch (this.playerAngle) {
+        case 270:
+          this.player.setVelocityX(-speed);
+          break;
+        case 90:
+          this.player.setVelocityX(speed);
+          break;
+        case 180:
+          this.player.setVelocityY(speed);
+          break;
+        case 0:
+          this.player.setVelocityY(-speed);
+          break;
       }
     } else if (cursors.right.isDown) {
-      if (this.keyPress === false) {
-        if (this.playerAngle === 270) {
-          this.playerAngle = 0;
-        } else {
-          this.playerAngle += 90;
-        }
-        this.keyPress = true;
+      switch (this.playerAngle) {
+        case 270:
+          this.player.setVelocityX(speed);
+          break;
+        case 90:
+          this.player.setVelocityX(-speed);
+          break;
+        case 180:
+          this.player.setVelocityY(-speed);
+          break;
+        case 0:
+          this.player.setVelocityY(speed);
+          break;
       }
-    }
-
-    if (cursors.left.isUp && cursors.right.isUp) {
-      this.keyPress = false;
     }
   }
 
