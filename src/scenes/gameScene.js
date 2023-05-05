@@ -37,12 +37,40 @@ export class GameScene extends Phaser.Scene {
     this.keyPress = false;
   }
   init(data) {
+    if (this.music?.isPlaying) {
+      this.music.stop()
+    }
     this.currentLevel = data.level;
     this.cameras.main.setBackgroundColor("#4E68E0");
     this.username = data.username;
 
+    this.cursors = this.input.keyboard.createCursorKeys();
     this.leftRotate = this.input.keyboard.addKey("Q");
     this.rightRotate = this.input.keyboard.addKey("E");
+
+    this.cursors.up.on("up", () => {
+      if (this.footsteps.isPlaying) {
+        this.footsteps.stop();
+      }
+    });
+
+    this.cursors.down.on("up", () => {
+      if (this.footsteps.isPlaying) {
+        this.footsteps.stop();
+      }
+    });
+
+    this.cursors.left.on("up", () => {
+      if (this.footsteps.isPlaying) {
+        this.footsteps.stop();
+      }
+    });
+
+    this.cursors.right.on("up", () => {
+      if (this.footsteps.isPlaying) {
+        this.footsteps.stop();
+      }
+    });
 
     this.leftRotate.on("up", () => {
       if (this.playerAngle === 0) {
@@ -67,6 +95,7 @@ export class GameScene extends Phaser.Scene {
       `tilemap${this.currentLevel}`,
       `./maze${this.currentLevel}.json`
     );
+    this.load.audio("footsteps", "./footsteps.mp3");
   }
 
   create(data) {
@@ -128,13 +157,15 @@ export class GameScene extends Phaser.Scene {
 
     this.coins.setVisible(false);
     this.ghostGroup.setVisible(false);
-    this.cursors = this.input.keyboard.createCursorKeys();
 
     this.player.setBounce(0);
     this.player.setDrag(0);
     this.player.setVisible(false);
     this.scoreLabel = this.createScoreLabel(16, 16, data.score || 0);
-    this.music = this.sound.add("background-music", { loop: true });
+    this.music = this.sound.add("background-music", {
+      loop: true,
+      volume: 0.5,
+    });
     this.music.play();
 
     this.physics.add.overlap(
@@ -169,12 +200,15 @@ export class GameScene extends Phaser.Scene {
       this
     );
 
+    this.footsteps = this.sound.add("footsteps", { loop: true, volume: 2 });
+    console.log(this.currentLevel);
+
     this.createRaycaster();
   }
 
   update() {
     const ghostsArray = this.ghostGroup.getChildren();
-    if (this.cursors) {
+    if (!this.hasHit) {
       this.playerMovement(this.cursors);
       this.updateRaycaster();
     }
@@ -192,6 +226,12 @@ export class GameScene extends Phaser.Scene {
   playerMovement(cursors) {
     const speed = 125 / 2;
     this.player.setVelocity(0);
+    console.log(cursors)
+    if (cursors.up.isDown || cursors.down.isDown || cursors.left.isDown || cursors.right.isDown) {
+      if (!this.footsteps.isPlaying) {
+        this.footsteps.play();
+      }
+    }
 
     if (cursors.up.isDown) {
       switch (this.playerAngle) {
@@ -286,21 +326,21 @@ export class GameScene extends Phaser.Scene {
   collectPowerPill(player, powerPill) {
     if (this.currentLevel < 5) {
       this.add
-      .text(
-        this.cameras.main.width / 2,
-        this.cameras.main.height / 2,
-        `Congrats Moving to Level ${this.currentLevel + 1}`,
-        {
-          font: "50px Arial",
-          strokeThickness: 2,
-          color: "#000000",
-          backgroundColor: "#ffffff",
-        }
+        .text(
+          this.cameras.main.width / 2,
+          this.cameras.main.height / 2,
+          `Congrats Moving to Level ${this.currentLevel + 1}`,
+          {
+            font: "50px Arial",
+            strokeThickness: 2,
+            color: "#000000",
+            backgroundColor: "#ffffff",
+          }
         )
         .setOrigin(0.5);
-        this.time.addEvent({
-          delay: 2000,
-          callback: () => {
+      this.time.addEvent({
+        delay: 2000,
+        callback: () => {
           this.music.stop();
           this.scene.restart({
             username: this.username,
@@ -317,8 +357,8 @@ export class GameScene extends Phaser.Scene {
   }
 
   hitGhost(player, ghost) {
+    this.hasHit = true;
     this.player.disableBody();
-    this.cursors = null;
     this.raycaster.removeMappedObjects(this.wallsLayer);
     player.setTint(0xff4444);
     this.submitScore(this.scoreLabel.score);
@@ -346,6 +386,7 @@ export class GameScene extends Phaser.Scene {
     this.playAgain.setInteractive({ useHandCursor: true });
     this.playAgain.on("pointerup", () => {
       this.music.stop();
+      this.hasHit = false;
       this.scene.restart({
         username: this.username,
         level: 1,
