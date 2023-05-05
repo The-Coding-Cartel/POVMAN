@@ -141,7 +141,7 @@ export class GameScene extends Phaser.Scene {
                 tile.pixelX + tile.width / 2,
                 tile.pixelY + tile.width / 2
           );
-          currentGhost.movementSFX = this.sound.add(`${currentGhost.id} sound`, "./footsteps.m")
+
           break;
         case 6:
           this.powerPills.create(
