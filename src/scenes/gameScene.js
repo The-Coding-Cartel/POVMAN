@@ -15,7 +15,6 @@ import { firestore } from "../firebase";
 export class GameScene extends Phaser.Scene {
   constructor() {
     super("gameScene");
-    this.direction = "up";
     this.enemyDirection = "up";
     this.scoreLabel = null;
     this.ghostSpawner = null;
@@ -174,7 +173,6 @@ export class GameScene extends Phaser.Scene {
   }
 
   createPlayer(xPos, yPos) {
-    this.direction = "right";
     const player = this.physics.add.sprite(xPos, yPos, "povman").setScale(0.6);
     player.setCircle(12);
     return player;
@@ -389,13 +387,16 @@ export class GameScene extends Phaser.Scene {
 
       let inverse = (32 * 320) / distance;
       if (intersection[i].object.type === "TilemapLayer") {
-        const hex = this.RGBtoHex(Math.floor(inverse), 0, 0);
+        const inverseClamp = Math.floor(Phaser.Math.Clamp(inverse, 0, 255));
+
+        const hex = this.RGBtoHex(inverseClamp, 0, 0);
         this.graphics.lineStyle(5, 0xff00ff, 1.0);
         this.graphics.fillStyle(Number(hex));
         this.graphics.fillRect(0 + i * 2.5, 350, 2.5, inverse);
         this.graphics.fillRect(0 + i * 2.5, 350, 2.5, -inverse);
       } else if (intersection[i].object.type !== "TilemapLayer") {
-        const hex = this.RGBtoHex(0, Math.floor(inverse), 0);
+        const inverseClamp = Math.floor(Phaser.Math.Clamp(inverse, 0, 255));
+        const hex = this.RGBtoHex(0, inverseClamp, 0);
         this.graphics.lineStyle(5, 0xff00ff, 1.0);
         this.graphics.fillStyle(Number(hex));
         this.graphics.fillRect(0 + i * 2.5, 350, 2.5, inverse);
